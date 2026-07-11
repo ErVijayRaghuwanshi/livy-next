@@ -1,0 +1,417 @@
+basePath: /
+definitions:
+  api.CreateSessionRequest:
+    properties:
+      conf:
+        additionalProperties:
+          type: string
+        type: object
+      jars:
+        items:
+          type: string
+        type: array
+      kind:
+        type: string
+      name:
+        type: string
+      proxyUser:
+        type: string
+    type: object
+  api.CreateStatementRequest:
+    properties:
+      code:
+        type: string
+    type: object
+  api.SessionsResponse:
+    properties:
+      from:
+        type: integer
+      sessions:
+        items:
+          $ref: '#/definitions/session.Session'
+        type: array
+      total:
+        type: integer
+    type: object
+  api.StatementsResponse:
+    properties:
+      statements:
+        items:
+          $ref: '#/definitions/session.Statement'
+        type: array
+      total_statements:
+        type: integer
+    type: object
+  session.Session:
+    properties:
+      appId:
+        type: string
+      appInfo:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: integer
+      kind:
+        description: '"spark", "pyspark", "sparkr"'
+        type: string
+      lastActivity:
+        type: string
+      log:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      owner:
+        type: string
+      proxyUser:
+        type: string
+      state:
+        $ref: '#/definitions/session.SessionState'
+      statements:
+        items:
+          $ref: '#/definitions/session.Statement'
+        type: array
+    type: object
+  session.SessionState:
+    enum:
+    - starting
+    - idle
+    - busy
+    - dead
+    - shutting_down
+    type: string
+    x-enum-varnames:
+    - SessionStarting
+    - SessionIdle
+    - SessionBusy
+    - SessionDead
+    - SessionShuttingDown
+  session.Statement:
+    properties:
+      code:
+        type: string
+      completed:
+        description: Milliseconds epoch
+        type: integer
+      id:
+        type: integer
+      output:
+        $ref: '#/definitions/session.StatementOutput'
+      progress:
+        type: number
+      started:
+        description: Milliseconds epoch
+        type: integer
+      state:
+        $ref: '#/definitions/session.StatementState'
+    type: object
+  session.StatementOutput:
+    properties:
+      data:
+        additionalProperties: true
+        description: e.g. "application/json" -> QueryResult or "text/plain" -> string
+        type: object
+      ename:
+        type: string
+      evalue:
+        type: string
+      execution_count:
+        type: integer
+      status:
+        description: '"ok" or "error"'
+        type: string
+      traceback:
+        items:
+          type: string
+        type: array
+    type: object
+  session.StatementState:
+    enum:
+    - waiting
+    - running
+    - available
+    - error
+    - cancelling
+    - cancelled
+    type: string
+    x-enum-varnames:
+    - StatementWaiting
+    - StatementRunning
+    - StatementAvailable
+    - StatementError
+    - StatementCancelling
+    - StatementCancelled
+host: localhost:8998
+info:
+  contact: {}
+  description: Apache Livy successor working on Spark 4.0 and Spark Connect.
+  title: Livy-Next API
+  version: "1.0"
+paths:
+  /sessions:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all active interactive sessions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.SessionsResponse'
+      summary: List all active sessions
+      tags:
+      - sessions
+    post:
+      consumes:
+      - application/json
+      description: Create a new interactive session and connect to Spark Connect
+      parameters:
+      - description: Create Session Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/session.Session'
+        "400":
+          description: Invalid request payload
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to connect to Spark Connect
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new session
+      tags:
+      - sessions
+  /sessions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Close and terminate a specific session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session deleted msg
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid session ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete session
+      tags:
+      - sessions
+    get:
+      consumes:
+      - application/json
+      description: Get details and state of a specific session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/session.Session'
+        "400":
+          description: Invalid session ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get session details
+      tags:
+      - sessions
+  /sessions/{id}/statements:
+    get:
+      consumes:
+      - application/json
+      description: List all statements submitted to a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.StatementsResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List statements
+      tags:
+      - statements
+    post:
+      consumes:
+      - application/json
+      description: Submit a SQL statement for execution in a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Submit Statement Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateStatementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/session.Statement'
+        "400":
+          description: Invalid payload/ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Session not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Submit a statement
+      tags:
+      - statements
+  /sessions/{id}/statements/{statementId}:
+    get:
+      consumes:
+      - application/json
+      description: Get execution state and results of a statement
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Statement ID
+        in: path
+        name: statementId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/session.Statement'
+        "400":
+          description: Invalid session/statement ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Session/Statement not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get statement details
+      tags:
+      - statements
+  /sessions/{id}/statements/{statementId}/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancel a statement execution inside a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Statement ID
+        in: path
+        name: statementId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'msg: cancelled'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid session/statement ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Session/Statement not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cancel a statement
+      tags:
+      - statements
+swagger: "2.0"

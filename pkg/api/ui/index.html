@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livy-Next Dashboard</title>
+    <!-- Modern Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-surface: rgba(17, 24, 39, 0.7);
+            --bg-card: rgba(31, 41, 55, 0.4);
+            --border-glow: rgba(99, 102, 241, 0.15);
+            --border-hover: rgba(99, 102, 241, 0.4);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --primary: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --accent-glow: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, .brand-title {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        header {
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            background: var(--primary-gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #ffffff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            transition: all 0.2s ease-in-out;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 70px);
+            overflow: hidden;
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+        .panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .session-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .session-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: transparent;
+            transition: background-color 0.2s ease;
+        }
+
+        .session-card:hover {
+            border-color: var(--border-hover);
+            transform: translateX(4px);
+            background: rgba(31, 41, 55, 0.6);
+        }
+
+        .session-card.active {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .session-card.active::before {
+            background: var(--primary);
+        }
+
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .session-id {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .badge-idle {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-busy {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-starting {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .badge-dead {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .session-meta {
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .session-meta-item {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Detail Panel Styles */
+        .detail-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 3rem;
+            gap: 1rem;
+            height: 100%;
+        }
+
+        .detail-placeholder svg {
+            width: 4rem;
+            height: 4rem;
+            stroke: rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0 1rem;
+        }
+
+        .tab {
+            padding: 1rem 1.25rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            color: white;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-pane {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .tab-pane.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Execution Console Styles */
+        .sql-editor-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        textarea.sql-editor {
+            width: 100%;
+            min-height: 120px;
+            background: transparent;
+            border: none;
+            color: #10b981;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            resize: vertical;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        .sql-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .results-container {
+            flex: 1;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-header {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .results-table-wrapper {
+            overflow: auto;
+            flex: 1;
+        }
+
+        table.results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+            text-align: left;
+        }
+
+        table.results-table th {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem 1rem;
+            color: white;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+        }
+
+        table.results-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        table.results-table tr:hover td {
+            color: white;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Statement List Styles */
+        .statement-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .statement-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .statement-code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem;
+            border-radius: 6px;
+            color: #60a5fa;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Logs Panel */
+        .log-terminal {
+            background: #05070c;
+            border-radius: 12px;
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #d1d5db;
+            line-height: 1.6;
+            overflow-y: auto;
+            flex: 1;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .log-line {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.01);
+            padding: 0.25rem 0;
+            white-space: pre-wrap;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal {
+            background: var(--bg-base);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            width: 450px;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+        }
+
+        .modal-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        select.form-control, input.form-control {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+        }
+
+        select.form-control:focus, input.form-control:focus {
+            border-color: var(--primary);
+        }
+
+        .modal-footer {
+            padding: 1.25rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">L</div>
+            <div class="brand-title">LIVY-NEXT</div>
+            <span class="badge badge-starting" style="text-transform:none; margin-left: 0.5rem; font-size: 0.7rem; font-family:'JetBrains Mono',monospace;">v1.0.0 (Go/Connect)</span>
+        </div>
+        <div style="display:flex; gap:1rem;">
+            <a href="/swagger/index.html" class="btn btn-secondary" target="_blank">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Swagger API
+            </a>
+            <button class="btn" onclick="openNewSessionModal()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+                New Session
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Session List Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Interactive Sessions
+                </div>
+                <button class="btn btn-secondary" style="padding: 0.4rem; border-radius: 6px;" onclick="loadSessions()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"/></svg>
+                </button>
+            </div>
+            <div class="list-container" id="session-list">
+                <div class="no-data">Loading sessions...</div>
+            </div>
+        </div>
+
+        <!-- Session Detail Panel -->
+        <div class="panel" id="detail-panel">
+            <div class="detail-placeholder">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 15l-6 5L3 9v11a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2h-3l-2-4H9L7 8H4v2h3v10"/></svg>
+                <div>
+                    <h3 style="margin-bottom: 0.25rem;">No Session Selected</h3>
+                    <p style="font-size: 0.85rem;">Select an active interactive session from the sidebar to query SQL statements and view logs.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Session Modal -->
+    <div class="modal-overlay" id="create-modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 style="font-weight:600;">Create Interactive Session</h3>
+                <button class="btn btn-secondary" style="padding:0.25rem; border:none; background:transparent;" onclick="closeNewSessionModal()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Session Kind</label>
+                    <select class="form-control" id="session-kind">
+                        <option value="spark">Spark (SQL & DataFrame)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Session Name (Optional)</label>
+                    <input type="text" class="form-control" id="session-name" placeholder="e.g. my-analysis-session">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Proxy User (Optional)</label>
+                    <input type="text" class="form-control" id="proxy-user" placeholder="e.g. spark_admin">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNewSessionModal()">Cancel</button>
+                <button class="btn" onclick="submitCreateSession()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessions = [];
+        let selectedSessionId = null;
+        let selectedTab = 'console';
+        let refreshInterval = null;
+        let activeStatementPoller = null;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+            setInterval(loadSessions, 10000); // Poll session states every 10s
+        });
+
+        async function loadSessions() {
+            try {
+                const res = await fetch('/sessions');
+                const data = await res.json();
+                sessions = data.sessions || [];
+                renderSessionList();
+                if (selectedSessionId !== null) {
+                    const activeSess = sessions.find(s => s.id === selectedSessionId);
+                    if (activeSess) {
+                        // Refresh details
+                        updateSelectedSessionDetails(activeSess);
+                    } else {
+                        // Current session died
+                        selectedSessionId = null;
+                        renderPlaceholder();
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load sessions", err);
+            }
+        }
+
+        function renderSessionList() {
+            const list = document.getElementById('session-list');
+            if (sessions.length === 0) {
+                list.innerHTML = `<div class="no-data">No active sessions. Click "New Session" to start.</div>`;
+                return;
+            }
+
+            list.innerHTML = sessions.map(s => {
+                const isActive = s.id === selectedSessionId ? 'active' : '';
+                let badgeClass = 'badge-idle';
+                if (s.state === 'busy') badgeClass = 'badge-busy';
+                if (s.state === 'starting') badgeClass = 'badge-starting';
+                if (s.state === 'dead') badgeClass = 'badge-dead';
+
+                const sessionNameDisplay = s.name ? `${escapeHtml(s.name)} (#${s.id})` : `Session #${s.id}`;
+                const uiUrl = s.appInfo && s.appInfo.sparkUiUrl;
+                const appIdHtml = uiUrl ? `<a href="${uiUrl}" target="_blank" style="color:#60a5fa; text-decoration:underline; font-weight: 500;">${s.appId}</a>` : (s.appId || 'N/A');
+
+                return `
+                    <div class="session-card ${isActive}" onclick="selectSession(${s.id})">
+                        <div class="session-header">
+                            <span class="session-id">${sessionNameDisplay}</span>
+                            <span class="badge ${badgeClass}">${s.state}</span>
+                        </div>
+                        <div class="session-meta">
+                            <div class="session-meta-item">
+                                <span>Kind:</span> <span>${s.kind}</span>
+                            </div>
+                            <div class="session-meta-item">
+                                <span>Session ID:</span> <span style="font-family: monospace; font-size:0.75rem;">${s.sessionId || 'N/A'}</span>
+                            </div>
+                            <div class="session-meta-item">
+                                <span>App ID:</span> <span style="font-family: monospace; font-size:0.75rem;">${appIdHtml}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectSession(id) {
+            selectedSessionId = id;
+            renderSessionList();
+            renderSessionDetailPane();
+            
+            const sess = sessions.find(s => s.id === id);
+            if (sess) {
+                updateSelectedSessionDetails(sess);
+                loadStatements();
+            }
+        }
+
+        function renderPlaceholder() {
+            const pane = document.getElementById('detail-panel');
+            pane.innerHTML = `
+                <div class="detail-placeholder">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 15l-6 5L3 9v11a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2h-3l-2-4H9L7 8H4v2h3v10"/></svg>
+                    <div>
+                        <h3 style="margin-bottom: 0.25rem;">No Session Selected</h3>
+                        <p style="font-size: 0.85rem;">Select an active interactive session from the sidebar to query SQL statements and view logs.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSessionDetailPane() {
+            const pane = document.getElementById('detail-panel');
+            pane.innerHTML = `
+                <div class="detail-content">
+                    <div class="panel-header" style="background: rgba(0,0,0,0.1);">
+                        <div class="panel-title" id="detail-session-title">Session Details</div>
+                        <div style="display:flex; gap:0.75rem; align-items:center;">
+                            <span id="detail-spark-ui-btn"></span>
+                            <button class="btn btn-danger" id="btn-terminate-session" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteSession(${selectedSessionId})">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                Terminate
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tabs">
+                        <div class="tab ${selectedTab === 'console' ? 'active' : ''}" onclick="switchTab('console')">SQL Console</div>
+                        <div class="tab ${selectedTab === 'statements' ? 'active' : ''}" onclick="switchTab('statements')">Statements History</div>
+                        <div class="tab ${selectedTab === 'logs' ? 'active' : ''}" onclick="switchTab('logs')">Session Logs</div>
+                    </div>
+
+                    <!-- Tab Panel Console -->
+                    <div class="tab-pane ${selectedTab === 'console' ? 'active' : ''}" id="pane-console">
+                        <div class="sql-editor-container">
+                            <textarea class="sql-editor" id="sql-query-input" placeholder="-- Write SQL Statement here\nSELECT * FROM range(1, 100);"></textarea>
+                            <div class="sql-actions">
+                                <div id="execute-status" style="font-size:0.85rem; color:var(--text-secondary);"></div>
+                                <button class="btn" id="btn-execute-sql" onclick="executeSQL()">
+                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Execute SQL
+                                </button>
+                            </div>
+                        </div>
+                        <div class="results-container">
+                            <div class="results-header">
+                                <span>Output Results</span>
+                                <span id="results-count">0 rows</span>
+                            </div>
+                            <div class="results-table-wrapper" id="console-results">
+                                <div class="no-data">Run a SQL statement above to display table results.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Panel History -->
+                    <div class="tab-pane ${selectedTab === 'statements' ? 'active' : ''}" id="pane-statements">
+                        <div id="statements-list-container">
+                            <div class="no-data">No statements executed in this session.</div>
+                        </div>
+                    </div>
+
+                    <!-- Tab Panel Logs -->
+                    <div class="tab-pane ${selectedTab === 'logs' ? 'active' : ''}" id="pane-logs">
+                        <div class="log-terminal" id="logs-container">
+                            <!-- Logs will auto populate here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchTab(tabName) {
+            selectedTab = tabName;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            
+            // Activate current tab/pane
+            const tabElements = document.querySelectorAll('.tab');
+            if (tabName === 'console') {
+                tabElements[0].classList.add('active');
+                document.getElementById('pane-console').classList.add('active');
+            } else if (tabName === 'statements') {
+                tabElements[1].classList.add('active');
+                document.getElementById('pane-statements').classList.add('active');
+                loadStatements();
+            } else if (tabName === 'logs') {
+                tabElements[2].classList.add('active');
+                document.getElementById('pane-logs').classList.add('active');
+            }
+        }
+
+        function updateSelectedSessionDetails(sess) {
+            const displayName = sess.name ? `${escapeHtml(sess.name)} (#${sess.id})` : `Session #${sess.id}`;
+            const title = document.getElementById('detail-session-title');
+            if (title) {
+                title.innerText = `${displayName} (${sess.kind})`;
+            }
+
+            const sparkUiBtn = document.getElementById('detail-spark-ui-btn');
+            if (sparkUiBtn) {
+                const uiUrl = sess.appInfo && sess.appInfo.sparkUiUrl;
+                if (uiUrl) {
+                    sparkUiBtn.innerHTML = `
+                        <a href="${uiUrl}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" target="_blank">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            Spark UI
+                        </a>
+                    `;
+                } else {
+                    sparkUiBtn.innerHTML = '';
+                }
+            }
+
+            const logsContainer = document.getElementById('logs-container');
+            if (logsContainer) {
+                logsContainer.innerHTML = (sess.log || []).map(line => `
+                    <div class="log-line">${line}</div>
+                `).join('');
+            }
+
+            const terminateBtn = document.getElementById('btn-terminate-session');
+            const sqlQueryInput = document.getElementById('sql-query-input');
+            const btnExecuteSql = document.getElementById('btn-execute-sql');
+
+            if (sess.state === 'dead') {
+                if (terminateBtn) {
+                    terminateBtn.disabled = true;
+                    terminateBtn.style.opacity = '0.5';
+                    terminateBtn.style.cursor = 'not-allowed';
+                    terminateBtn.innerHTML = `
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                        Terminated
+                    `;
+                }
+                if (sqlQueryInput) {
+                    sqlQueryInput.disabled = true;
+                    sqlQueryInput.placeholder = "-- Session is terminated. You cannot execute SQL queries.";
+                    sqlQueryInput.value = "";
+                }
+                if (btnExecuteSql) {
+                    btnExecuteSql.disabled = true;
+                    btnExecuteSql.style.opacity = '0.5';
+                    btnExecuteSql.style.cursor = 'not-allowed';
+                }
+            } else {
+                if (terminateBtn) {
+                    terminateBtn.disabled = false;
+                    terminateBtn.style.opacity = '1';
+                    terminateBtn.style.cursor = 'pointer';
+                    terminateBtn.innerHTML = `
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Terminate
+                    `;
+                }
+                if (sqlQueryInput) {
+                    sqlQueryInput.disabled = false;
+                    sqlQueryInput.placeholder = "-- Write SQL Statement here\nSELECT * FROM range(1, 100);";
+                }
+                if (btnExecuteSql) {
+                    btnExecuteSql.disabled = false;
+                    btnExecuteSql.style.opacity = '1';
+                    btnExecuteSql.style.cursor = 'pointer';
+                }
+            }
+        }
+
+        // Executing statements
+        async function executeSQL() {
+            const queryInput = document.getElementById('sql-query-input');
+            const sql = queryInput.value.trim();
+            if (!sql) return;
+
+            const btn = document.getElementById('btn-execute-sql');
+            const status = document.getElementById('execute-status');
+            const resultsPane = document.getElementById('console-results');
+            const resultsCount = document.getElementById('results-count');
+
+            btn.disabled = true;
+            status.innerHTML = `<span class="loading-spinner" style="vertical-align: middle; margin-right: 0.5rem; width:1rem; height:1rem;"></span> Submitting...`;
+            resultsPane.innerHTML = `<div class="no-data"><span class="loading-spinner"></span> Executing statement on Spark Connect...</div>`;
+
+            try {
+                const res = await fetch(`/sessions/${selectedSessionId}/statements`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: sql })
+                });
+
+                if (!res.ok) {
+                    const errObj = await res.json();
+                    throw new Error(errObj.error || "Execution failed");
+                }
+
+                const stmt = await res.json();
+                pollStatement(stmt.id);
+
+            } catch (err) {
+                status.innerText = "Error";
+                resultsPane.innerHTML = `<div class="no-data" style="color:var(--error); font-family:'JetBrains Mono',monospace;">Execution error: ${err.message}</div>`;
+                btn.disabled = false;
+            }
+        }
+
+        function pollStatement(stmtId) {
+            const btn = document.getElementById('btn-execute-sql');
+            const status = document.getElementById('execute-status');
+            const resultsPane = document.getElementById('console-results');
+            const resultsCount = document.getElementById('results-count');
+
+            if (activeStatementPoller) clearInterval(activeStatementPoller);
+
+            activeStatementPoller = setInterval(async () => {
+                try {
+                    const res = await fetch(`/sessions/${selectedSessionId}/statements/${stmtId}`);
+                    const stmt = await res.json();
+                    
+                    status.innerHTML = `Statement #${stmtId} is ${stmt.state}...`;
+
+                    if (stmt.state === 'available') {
+                        clearInterval(activeStatementPoller);
+                        btn.disabled = false;
+                        status.innerText = `Finished statement #${stmtId}`;
+                        renderQueryResults(stmt.output);
+                        loadSessions(); // refresh logs
+                    } else if (stmt.state === 'error') {
+                        clearInterval(activeStatementPoller);
+                        btn.disabled = false;
+                        status.innerText = `Failed statement #${stmtId}`;
+                        resultsPane.innerHTML = `
+                            <div class="no-data" style="color:var(--error); text-align: left; font-family:'JetBrains Mono',monospace; padding: 1.5rem;">
+                                <strong>Error Name:</strong> ${stmt.output.ename || 'SparkExecutionError'}<br><br>
+                                <strong>Error Message:</strong> ${stmt.output.evalue || 'Unknown exception'}<br><br>
+                                <strong>Traceback:</strong><br>
+                                <pre style="white-space: pre-wrap; font-size:0.8rem; margin-top:0.5rem; color:#f87171;">${(stmt.output.traceback || []).join('\n')}</pre>
+                            </div>
+                        `;
+                        loadSessions(); // refresh logs
+                    }
+                } catch (err) {
+                    clearInterval(activeStatementPoller);
+                    btn.disabled = false;
+                    status.innerText = "Failed polling";
+                }
+            }, 500);
+        }
+
+        function renderQueryResults(output) {
+            const resultsPane = document.getElementById('console-results');
+            const resultsCount = document.getElementById('results-count');
+
+            if (output.status !== 'ok' || !output.data || !output.data['application/json']) {
+                resultsPane.innerHTML = `<div class="no-data">Statement executed successfully with no data output.</div>`;
+                resultsCount.innerText = "0 rows";
+                return;
+            }
+
+            const queryResult = output.data['application/json'];
+            const schemaObj = queryResult.schema || {};
+            const fields = schemaObj.fields || [];
+            const rows = queryResult.data || [];
+
+            resultsCount.innerText = `${rows.length} rows`;
+
+            if (rows.length === 0) {
+                resultsPane.innerHTML = `<div class="no-data">Empty result set returned.</div>`;
+                return;
+            }
+
+            const tableHtml = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            ${fields.map(f => `<th>${f.name}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr>
+                                ${fields.map((f, i) => {
+                                    const val = Array.isArray(row) ? row[i] : row[f.name];
+                                    return `<td>${val !== null && val !== undefined ? escapeHtml(String(val)) : '<span style="color:#4b5563; font-style:italic;">null</span>'}</td>`;
+                                }).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            resultsPane.innerHTML = tableHtml;
+        }
+
+        async function loadStatements() {
+            const container = document.getElementById('statements-list-container');
+            if (!container) return;
+
+            try {
+                const res = await fetch(`/sessions/${selectedSessionId}/statements`);
+                const data = await res.json();
+                const stmts = data.statements || [];
+
+                if (stmts.length === 0) {
+                    container.innerHTML = `<div class="no-data">No statements executed in this session.</div>`;
+                    return;
+                }
+
+                container.innerHTML = stmts.map(s => {
+                    let badgeClass = 'badge-idle';
+                    if (s.state === 'running') badgeClass = 'badge-busy';
+                    if (s.state === 'waiting') badgeClass = 'badge-starting';
+                    if (s.state === 'error') badgeClass = 'badge-dead';
+
+                    return `
+                        <div class="statement-item">
+                            <div class="statement-meta">
+                                <span>Statement #${s.id}</span>
+                                <span class="badge ${badgeClass}">${s.state}</span>
+                            </div>
+                            <div class="statement-code">${escapeHtml(s.code)}</div>
+                            <div class="statement-meta" style="margin-bottom:0; font-size:0.75rem;">
+                                <span>Progress: ${(s.progress * 100).toFixed(0)}%</span>
+                                <span>Duration: ${s.completed && s.started ? (s.completed - s.started) : '0'} ms</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Failed to load statements list", err);
+            }
+        }
+
+        // Sessions creation/deletion
+        async function deleteSession(id) {
+            if (!confirm(`Are you sure you want to terminate Session #${id}?`)) return;
+            try {
+                const res = await fetch(`/sessions/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    selectedSessionId = null;
+                    renderPlaceholder();
+                    loadSessions();
+                } else {
+                    alert("Failed to terminate session");
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function openNewSessionModal() {
+            const overlay = document.getElementById('create-modal-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.style.opacity = '1', 10);
+            const modal = overlay.querySelector('.modal');
+            modal.style.transform = 'scale(1)';
+        }
+
+        function closeNewSessionModal() {
+            const overlay = document.getElementById('create-modal-overlay');
+            overlay.style.opacity = '0';
+            const modal = overlay.querySelector('.modal');
+            modal.style.transform = 'scale(0.95)';
+            setTimeout(() => overlay.style.display = 'none', 250);
+        }
+
+        async function submitCreateSession() {
+            const kind = document.getElementById('session-kind').value;
+            const name = document.getElementById('session-name').value.trim();
+            const proxyUser = document.getElementById('proxy-user').value.trim();
+
+            closeNewSessionModal();
+            try {
+                const res = await fetch('/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ kind, name, proxyUser })
+                });
+
+                if (res.ok) {
+                    const sess = await res.json();
+                    loadSessions();
+                    selectSession(sess.id);
+                } else {
+                    const err = await res.json();
+                    alert("Failed to create session: " + (err.error || res.statusText));
+                }
+            } catch (err) {
+                alert("Failed to create session: " + err.message);
+            }
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
