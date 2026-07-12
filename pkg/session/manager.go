@@ -12,19 +12,21 @@ type Manager struct {
 	sessions    map[int]*Session
 	nextID      int
 	idleTimeout time.Duration
+	deadTimeout time.Duration
 	stopCh      chan struct{}
 }
 
 // NewManager creates a new session Manager.
-func NewManager(idleTimeout time.Duration) *Manager {
+func NewManager(idleTimeout time.Duration, deadTimeout time.Duration) *Manager {
 	m := &Manager{
 		sessions:    make(map[int]*Session),
 		nextID:      0,
 		idleTimeout: idleTimeout,
+		deadTimeout: deadTimeout,
 		stopCh:      make(chan struct{}),
 	}
 
-	if idleTimeout > 0 {
+	if idleTimeout > 0 || deadTimeout > 0 {
 		go m.cleanupLoop()
 	}
 
@@ -117,10 +119,17 @@ func (m *Manager) cleanupIdleSessions() {
 
 	for id, sess := range m.sessions {
 		sess.mu.RLock()
-		// Clean up starting, idle, or dead sessions that exceed the idle timeout
-		shouldCleanup := sess.State == SessionIdle || sess.State == SessionStarting || sess.State == SessionDead
-		if shouldCleanup && now.Sub(sess.LastActivity) > m.idleTimeout {
-			toDelete = append(toDelete, id)
+		if sess.State == SessionDead {
+			// Clean up dead sessions after deadTimeout
+			if m.deadTimeout > 0 && now.Sub(sess.LastActivity) > m.deadTimeout {
+				toDelete = append(toDelete, id)
+			}
+		} else {
+			// Clean up starting or idle sessions after idleTimeout
+			shouldCleanup := sess.State == SessionIdle || sess.State == SessionStarting
+			if m.idleTimeout > 0 && shouldCleanup && now.Sub(sess.LastActivity) > m.idleTimeout {
+				toDelete = append(toDelete, id)
+			}
 		}
 		sess.mu.RUnlock()
 	}

@@ -62,7 +62,8 @@ A `Makefile` is provided to compile, tidy, test, and run the service.
 | :--- | :--- | :--- |
 | `--addr` | `:8998` | The host and port address `livy-next` binds to. |
 | `--spark-remote` | `sc://localhost:15002` | Connection string for the remote Spark Connect server. |
-| `--idle-timeout` | `30m` | Duration after which inactive/dead sessions are automatically terminated. |
+| `--idle-timeout` | `30m` | Duration after which running inactive sessions are automatically terminated. |
+| `--dead-timeout` | `5m` | Duration after which dead/stopped sessions are permanently removed from history. |
 | `--cors-allowed-origins` | `*` | Comma-separated list of allowed CORS origins. |
 | `--mock` | `false` | Enable in-memory mock Spark client for offline testing. |
 

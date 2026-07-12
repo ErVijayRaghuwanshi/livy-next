@@ -67,6 +67,8 @@ definitions:
         type: string
       proxyUser:
         type: string
+      sessionId:
+        type: string
       state:
         $ref: '#/definitions/session.SessionState'
       statements:

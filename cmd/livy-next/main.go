@@ -25,6 +25,7 @@ func main() {
 	addr := flag.String("addr", ":8998", "HTTP service address to bind to")
 	sparkRemote := flag.String("spark-remote", "sc://localhost:15002", "Spark Connect remote endpoint")
 	idleTimeout := flag.Duration("idle-timeout", 30*time.Minute, "Session idle timeout")
+	deadTimeout := flag.Duration("dead-timeout", 5*time.Minute, "Session dead/stopped retention duration in history")
 	corsAllowedOrigins := flag.String("cors-allowed-origins", "*", "Comma-separated list of allowed CORS origins")
 	mockMode := flag.Bool("mock", false, "Use in-memory mock Spark client for testing without a real Spark cluster")
 	flag.Parse()
@@ -33,9 +34,10 @@ func main() {
 	log.Printf("Spark Connect remote endpoint: %s", *sparkRemote)
 	log.Printf("CORS allowed origins: %s", *corsAllowedOrigins)
 	log.Printf("Mock mode: %v", *mockMode)
+	log.Printf("Dead session retention timeout: %s", *deadTimeout)
 
 	// 1. Initialize session manager
-	manager := session.NewManager(*idleTimeout)
+	manager := session.NewManager(*idleTimeout, *deadTimeout)
 	defer manager.CloseAll()
 
 	// 2. Define ClientCreator

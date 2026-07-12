@@ -517,6 +517,9 @@ const docTemplate = `{
                 "proxyUser": {
                     "type": "string"
                 },
+                "sessionId": {
+                    "type": "string"
+                },
                 "state": {
                     "$ref": "#/definitions/session.SessionState"
                 },

@@ -59,7 +59,7 @@ func (m *MockSparkClient) Close() error {
 }
 
 func TestLivyAPI(t *testing.T) {
-	manager := session.NewManager(10 * time.Minute)
+	manager := session.NewManager(10 * time.Minute, 5 * time.Minute)
 	defer manager.CloseAll()
 
 	mockClient := &MockSparkClient{
