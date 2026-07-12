@@ -276,6 +276,39 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        .timeout-progress-container {
+            margin-top: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            height: 0.85rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .timeout-progress-bar {
+            height: 100%;
+            width: 100%;
+            transition: width 1s linear, background-color 0.5s ease;
+            background: var(--success);
+        }
+
+        .timeout-progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         .session-meta {
             font-size: 0.825rem;
             color: var(--text-secondary);
@@ -671,11 +704,14 @@
         let selectedTab = 'console';
         let refreshInterval = null;
         let activeStatementPoller = null;
+        let idleTimeoutMs = 0;
+        let deadTimeoutMs = 0;
 
         // Init
         document.addEventListener('DOMContentLoaded', () => {
             loadSessions();
             setInterval(loadSessions, 10000); // Poll session states every 10s
+            setInterval(updateTimeoutProgressBars, 1000); // Update countdown bars every 1s
         });
 
         async function loadSessions() {
@@ -683,7 +719,10 @@
                 const res = await fetch('/sessions');
                 const data = await res.json();
                 sessions = data.sessions || [];
+                idleTimeoutMs = data.idleTimeout || 0;
+                deadTimeoutMs = data.deadTimeout || 0;
                 renderSessionList();
+                updateTimeoutProgressBars();
                 if (selectedSessionId !== null) {
                     const activeSess = sessions.find(s => s.id === selectedSessionId);
                     if (activeSess) {
@@ -698,6 +737,56 @@
             } catch (err) {
                 console.error("Failed to load sessions", err);
             }
+        }
+
+        function updateTimeoutProgressBars() {
+            sessions.forEach(s => {
+                const bar = document.getElementById(`progress-bar-${s.id}`);
+                const text = document.getElementById(`progress-text-${s.id}`);
+                if (!bar || !text) return;
+
+                const lastActivity = new Date(s.lastActivity).getTime();
+                const elapsed = Date.now() - lastActivity;
+                
+                let limit = 0;
+                let isDead = s.state === 'dead';
+                if (isDead) {
+                    limit = deadTimeoutMs;
+                } else {
+                    limit = idleTimeoutMs;
+                }
+
+                if (limit <= 0) {
+                    bar.style.width = '100%';
+                    text.innerText = isDead ? 'Terminated' : 'No timeout';
+                    return;
+                }
+
+                const remaining = Math.max(limit - elapsed, 0);
+                const pct = Math.min((remaining / limit) * 100, 100);
+
+                bar.style.width = `${pct}%`;
+
+                if (isDead) {
+                    bar.style.background = 'rgba(156, 163, 175, 0.4)';
+                } else if (pct > 50) {
+                    bar.style.background = 'var(--success)';
+                } else if (pct > 20) {
+                    bar.style.background = 'var(--warning)';
+                } else {
+                    bar.style.background = 'var(--error)';
+                }
+
+                if (remaining <= 0) {
+                    text.innerText = isDead ? 'Expired' : 'Expiring...';
+                } else {
+                    const secsTotal = Math.floor(remaining / 1000);
+                    const mins = Math.floor(secsTotal / 60);
+                    const secs = secsTotal % 60;
+                    const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+                    text.innerText = isDead ? `Removing in ${timeStr}` : `Expires in ${timeStr}`;
+                }
+            });
         }
 
         function renderSessionList() {
@@ -734,6 +823,10 @@
                             <div class="session-meta-item">
                                 <span>App ID:</span> <span style="font-family: monospace; font-size:0.75rem;">${appIdHtml}</span>
                             </div>
+                        </div>
+                        <div class="timeout-progress-container" id="progress-container-${s.id}">
+                            <div class="timeout-progress-bar" id="progress-bar-${s.id}"></div>
+                            <div class="timeout-progress-text" id="progress-text-${s.id}">Calculating...</div>
                         </div>
                     </div>
                 `;

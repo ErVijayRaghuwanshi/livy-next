@@ -36,9 +36,11 @@ type CreateSessionRequest struct {
 }
 
 type SessionsResponse struct {
-	From     int                `json:"from"`
-	Total    int                `json:"total"`
-	Sessions []*session.Session `json:"sessions"`
+	From        int                `json:"from"`
+	Total       int                `json:"total"`
+	Sessions    []*session.Session `json:"sessions"`
+	IdleTimeout int64              `json:"idleTimeout"` // in milliseconds
+	DeadTimeout int64              `json:"deadTimeout"` // in milliseconds
 }
 
 type CreateStatementRequest struct {
@@ -61,9 +63,11 @@ type StatementsResponse struct {
 func (h *Handler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	sessions := h.manager.ListSessions()
 	resp := SessionsResponse{
-		From:     0,
-		Total:    len(sessions),
-		Sessions: sessions,
+		From:        0,
+		Total:       len(sessions),
+		Sessions:    sessions,
+		IdleTimeout: int64(h.manager.GetIdleTimeout() / time.Millisecond),
+		DeadTimeout: int64(h.manager.GetDeadTimeout() / time.Millisecond),
 	}
 	respondJSON(w, http.StatusOK, resp)
 }

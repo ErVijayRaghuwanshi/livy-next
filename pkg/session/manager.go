@@ -67,6 +67,20 @@ func (m *Manager) ListSessions() []*Session {
 	return list
 }
 
+// GetIdleTimeout returns the configured idle timeout.
+func (m *Manager) GetIdleTimeout() time.Duration {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.idleTimeout
+}
+
+// GetDeadTimeout returns the configured dead session retention timeout.
+func (m *Manager) GetDeadTimeout() time.Duration {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.deadTimeout
+}
+
 // DeleteSession closes the session but does not immediately remove it from the manager, allowing stopped/dead sessions to be listed.
 func (m *Manager) DeleteSession(id int) error {
 	m.mu.Lock()

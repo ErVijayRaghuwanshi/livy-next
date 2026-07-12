@@ -452,7 +452,15 @@ const docTemplate = `{
         "api.SessionsResponse": {
             "type": "object",
             "properties": {
+                "deadTimeout": {
+                    "description": "in milliseconds",
+                    "type": "integer"
+                },
                 "from": {
+                    "type": "integer"
+                },
+                "idleTimeout": {
+                    "description": "in milliseconds",
                     "type": "integer"
                 },
                 "sessions": {

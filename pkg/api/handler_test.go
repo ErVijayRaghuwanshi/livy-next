@@ -114,6 +114,8 @@ func TestLivyAPI(t *testing.T) {
 	err = json.Unmarshal(rr.Body.Bytes(), &listResp)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, listResp.Total)
+	assert.Equal(t, int64(600000), listResp.IdleTimeout)
+	assert.Equal(t, int64(300000), listResp.DeadTimeout)
 	assert.Equal(t, 0, listResp.Sessions[0].ID)
 
 	// 3. Submit a Statement
