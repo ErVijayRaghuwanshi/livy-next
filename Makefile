@@ -15,6 +15,8 @@ build: swagger
 build-linux: swagger
 	mkdir -p bin
 	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/livy-next cmd/livy-next/main.go
+# 	Copy the binary to the docker build context
+	cp bin ../argus/
 
 test:
 	go test -v ./...
