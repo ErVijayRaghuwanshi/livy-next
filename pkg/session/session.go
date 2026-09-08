@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 )
@@ -91,7 +92,7 @@ type Session struct {
 	Kind         string            `json:"kind"` // "spark", "pyspark", "sparkr"
 	AppInfo      map[string]string `json:"appInfo"`
 	Log          []string          `json:"log"`
-	Statements   []*Statement      `json:"statements"`
+	Statements   []*Statement      `json:"-"`
 	LastActivity time.Time         `json:"lastActivity"`
 
 	client  SparkClient
@@ -228,6 +229,11 @@ func (s *Session) runStatement(stmt *Statement) {
 			Traceback:      []string{err.Error()},
 		}
 		s.Log = append(s.Log, "Statement execution failed: "+err.Error())
+
+		// If the Spark session was closed on the server side, automatically terminate this session locally
+		if strings.Contains(err.Error(), "SESSION_CLOSED") || strings.Contains(err.Error(), "INVALID_HANDLE") {
+			go s.Close()
+		}
 	} else {
 		stmt.State = StatementAvailable
 		stmt.Output = &StatementOutput{
@@ -254,14 +260,34 @@ func (s *Session) runStatement(stmt *Statement) {
 	s.LastActivity = time.Now()
 }
 
-// GetStatement retrieves a specific statement by ID.
+// GetStatement retrieves a specific statement by ID. If the statement is in a terminal state
+// (available, error, or cancelled), we return a copy containing the output and clear the
+// output in session storage to avoid keeping results in memory.
 func (s *Session) GetStatement(id int) (*Statement, bool) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if id < 0 || id >= len(s.Statements) {
 		return nil, false
 	}
-	return s.Statements[id], true
+	stmt := s.Statements[id]
+	if stmt.State == StatementAvailable || stmt.State == StatementError || stmt.State == StatementCancelled {
+		if stmt.Output != nil {
+			// Copy the statement to return with the output
+			stmtCopy := &Statement{
+				ID:        stmt.ID,
+				Code:      stmt.Code,
+				State:     stmt.State,
+				Output:    stmt.Output,
+				Progress:  stmt.Progress,
+				Started:   stmt.Started,
+				Completed: stmt.Completed,
+			}
+			// Discard the output from session storage to free resources
+			stmt.Output = nil
+			return stmtCopy, true
+		}
+	}
+	return stmt, true
 }
 
 // GetStatements retrieves all statements.

@@ -77,10 +77,6 @@ definitions:
         type: string
       state:
         $ref: '#/definitions/session.SessionState'
-      statements:
-        items:
-          $ref: '#/definitions/session.Statement'
-        type: array
     type: object
   session.SessionState:
     enum:

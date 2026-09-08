@@ -67,6 +67,9 @@ func TestLivyAPI(t *testing.T) {
 			if sql == "FAIL" {
 				return nil, errors.New("spark error")
 			}
+			if sql == "SESSION_CLOSED" {
+				return nil, errors.New("execution error: [INVALID_HANDLE.SESSION_CLOSED] The handle is invalid.")
+			}
 			if sql == "BLOCK" {
 				select {
 				case <-ctx.Done():
@@ -82,7 +85,7 @@ func TestLivyAPI(t *testing.T) {
 		},
 	}
 
-	creator := func(name string, kind string, conf map[string]string, jars []string) (session.SparkClient, error) {
+	creator := func(name string, kind string, conf map[string]string, jars []string, proxyUser string) (session.SparkClient, error) {
 		return mockClient, nil
 	}
 
@@ -186,6 +189,27 @@ func TestLivyAPI(t *testing.T) {
 	router.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code)
 	assert.JSONEq(t, `{"msg": "cancelled"}`, rr.Body.String())
+
+	// 5c. Submit a Statement that fails with SESSION_CLOSED
+	closedBody := []byte(`{"code": "SESSION_CLOSED"}`)
+	req, _ = http.NewRequest("POST", "/sessions/0/statements", bytes.NewBuffer(closedBody))
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusCreated, rr.Code)
+
+	// Sleep briefly to let the execution run and call s.Close()
+	time.Sleep(50 * time.Millisecond)
+
+	// Verify session is now dead
+	req, _ = http.NewRequest("GET", "/sessions/0", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var sessionStatus session.Session
+	err = json.Unmarshal(rr.Body.Bytes(), &sessionStatus)
+	assert.NoError(t, err)
+	assert.Equal(t, session.SessionDead, sessionStatus.State)
 
 	// 6. Delete Session
 	req, _ = http.NewRequest("DELETE", "/sessions/0", nil)

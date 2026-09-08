@@ -530,12 +530,6 @@ const docTemplate = `{
                 },
                 "state": {
                     "$ref": "#/definitions/session.SessionState"
-                },
-                "statements": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/session.Statement"
-                    }
                 }
             }
         },

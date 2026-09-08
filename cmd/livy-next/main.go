@@ -41,17 +41,26 @@ func main() {
 	defer manager.CloseAll()
 
 	// 2. Define ClientCreator
-	creator := func(name string, kind string, conf map[string]string, jars []string) (session.SparkClient, error) {
+	creator := func(name string, kind string, conf map[string]string, jars []string, proxyUser string) (session.SparkClient, error) {
 		if *mockMode {
 			log.Printf("Creating MOCK Spark Connect client for session %q", name)
 			return &spark.MockClient{AppName: name}, nil
 		}
 
-		log.Printf("Creating Spark Connect client for session %q, kind: %s, remote: %s", name, kind, *sparkRemote)
+		remote := *sparkRemote
+		if proxyUser != "" {
+			if strings.Contains(remote, ";") {
+				remote = fmt.Sprintf("%s;user_id=%s", remote, proxyUser)
+			} else {
+				remote = fmt.Sprintf("%s/;user_id=%s", remote, proxyUser)
+			}
+		}
+
+		log.Printf("Creating Spark Connect client for session %q, kind: %s, remote: %s", name, kind, remote)
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 
-		client, err := spark.NewClient(ctx, *sparkRemote, name)
+		client, err := spark.NewClient(ctx, remote, name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build Spark session: %w", err)
 		}

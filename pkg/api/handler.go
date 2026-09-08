@@ -12,7 +12,7 @@ import (
 )
 
 // ClientCreator defines the function signature for creating a session's Spark Connect client.
-type ClientCreator func(name string, kind string, conf map[string]string, jars []string) (session.SparkClient, error)
+type ClientCreator func(name string, kind string, conf map[string]string, jars []string, proxyUser string) (session.SparkClient, error)
 
 type Handler struct {
 	manager       *session.Manager
@@ -94,13 +94,14 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		req.Kind = "spark"
 	}
 
-	client, err := h.createClient(req.Name, req.Kind, req.Conf, req.Jars)
+	client, err := h.createClient(req.Name, req.Kind, req.Conf, req.Jars, req.ProxyUser)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to connect to Spark Connect server: "+err.Error())
 		return
 	}
 
 	sess := h.manager.CreateSession(req.Name, req.Kind, client)
+	sess.ProxyUser = req.ProxyUser
 	// Mark starting as idle immediately or wait for first connection check
 	sess.SetState(session.SessionIdle)
 
