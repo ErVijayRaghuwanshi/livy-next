@@ -1,8 +1,16 @@
-// @title Livy-Next API
-// @version 1.0
-// @description Apache Livy successor working on Spark 4.0 and Spark Connect.
+// @title Livy-Next REST API
+// @version 1.0.0
+// @description High-performance, lightweight Apache Livy successor designed for Spark 4.x and Apache Spark Connect.
+// @description Features interactive Spark session management, decoupled identity, multi-tenancy, statement execution, and result pagination.
+// @contact.name Livy-Next Maintainers
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 // @host localhost:8998
 // @BasePath /
+// @tag.name sessions
+// @tag.description Interactive Spark Connect session management and lifecycle operations
+// @tag.name statements
+// @tag.description Asynchronous statement submission, cancellation, and result pagination
 package main
 
 import (

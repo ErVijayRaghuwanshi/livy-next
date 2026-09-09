@@ -1,82 +1,177 @@
 basePath: /
 definitions:
+  api.CancelStatementResponse:
+    properties:
+      msg:
+        description: Msg indicates cancellation status
+        example: cancelled
+        type: string
+    type: object
   api.CreateSessionRequest:
     properties:
       conf:
         additionalProperties:
           type: string
+        description: Conf contains Spark configuration properties (spark.*)
         type: object
       jars:
+        description: Jars is an optional list of JAR paths to attach to the session
         items:
           type: string
         type: array
       kind:
+        description: 'Kind of session: "spark", "pyspark", or "sparkr" (defaults to
+          "spark")'
+        example: spark
         type: string
       name:
+        description: Name is an optional human-readable name for the session
+        example: etl-session
         type: string
       proxyUser:
+        description: ProxyUser for legacy Apache Livy compatibility
+        example: alice
+        type: string
+      sessionId:
+        description: SessionID is a client-specified UUID for Spark Connect session
+          isolation and reconnects
+        example: 6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f
+        type: string
+      token:
+        description: Token is the authentication token or bearer token forwarded to
+          Spark Connect
+        example: secret-token
+        type: string
+      userAgent:
+        description: UserAgent identifies the client connecting to Spark Connect
+        example: argus-worker
+        type: string
+      userId:
+        description: UserID for Spark Connect multi-tenancy (overrides proxyUser if
+          provided)
+        example: alice
         type: string
     type: object
   api.CreateStatementRequest:
     properties:
       code:
+        description: Code is the SQL statement string to execute
+        example: SELECT 'hello world' AS msg, 42 AS num
+        type: string
+      tags:
+        description: Tags is an optional list of tags to label and track the statement
+          in Spark Connect
+        items:
+          type: string
+        type: array
+    type: object
+  api.DeleteSessionResponse:
+    properties:
+      msg:
+        description: Msg indicates deletion status
+        example: deleted
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      error:
+        description: Error describes the error message
+        example: Session not found
         type: string
     type: object
   api.SessionsResponse:
     properties:
       deadTimeout:
-        description: in milliseconds
+        description: DeadTimeout is the server dead timeout threshold in milliseconds
+        example: 86400000
         type: integer
       from:
+        description: From is the result offset for pagination
+        example: 0
         type: integer
       idleTimeout:
-        description: in milliseconds
+        description: IdleTimeout is the server idle timeout threshold in milliseconds
+        example: 259200000
         type: integer
       sessions:
+        description: Sessions is the list of active sessions
         items:
           $ref: '#/definitions/session.Session'
         type: array
       total:
+        description: Total is the total number of active sessions
+        example: 1
         type: integer
     type: object
   api.StatementsResponse:
     properties:
       statements:
+        description: Statements is the list of submitted statements
         items:
           $ref: '#/definitions/session.Statement'
         type: array
       total_statements:
+        description: TotalStatements is the total count of statements in the session
+        example: 1
         type: integer
     type: object
   session.Session:
     properties:
       appId:
+        description: AppID is the Spark application ID reported by Spark Connect
+        example: app-20260909-0001
         type: string
       appInfo:
         additionalProperties:
           type: string
+        description: AppInfo contains links to Spark UI, Spark Connect UI, and History
+          Server
         type: object
       id:
+        description: ID is the numeric session identifier
+        example: 0
         type: integer
       kind:
-        description: '"spark", "pyspark", "sparkr"'
+        description: 'Kind of session: "spark", "pyspark", or "sparkr"'
+        example: spark
         type: string
       lastActivity:
+        description: LastActivity timestamp of the most recent operation
         type: string
       log:
+        description: Log contains server and session lifecycle log lines
         items:
           type: string
         type: array
       name:
+        description: Name is an optional human-readable name for the session
+        example: etl-session
         type: string
       owner:
+        description: Owner is the user who created the session
+        example: alice
         type: string
       proxyUser:
+        description: ProxyUser is the impersonated user for legacy Livy compatibility
+        example: alice
         type: string
       sessionId:
+        description: SessionID is the Spark Connect UUID session identifier
+        example: 6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f
         type: string
       state:
-        $ref: '#/definitions/session.SessionState'
+        allOf:
+        - $ref: '#/definitions/session.SessionState'
+        description: State of the session
+        example: idle
+      userAgent:
+        description: UserAgent is the client user agent string
+        example: argus-worker
+        type: string
+      userId:
+        description: UserID identifies the user in Spark Connect multi-tenancy
+        example: alice
+        type: string
     type: object
   session.SessionState:
     enum:
@@ -95,38 +190,65 @@ definitions:
   session.Statement:
     properties:
       code:
+        description: Code executed by the statement
+        example: SELECT 1 + 1
         type: string
       completed:
-        description: Milliseconds epoch
+        description: Completed timestamp in milliseconds epoch
+        example: 1773000001200
         type: integer
       id:
+        description: ID of the statement within the session
+        example: 0
         type: integer
       output:
-        $ref: '#/definitions/session.StatementOutput'
+        allOf:
+        - $ref: '#/definitions/session.StatementOutput'
+        description: Output results or error details
       progress:
+        description: Progress of statement execution (0.0 to 1.0)
+        example: 1
         type: number
       started:
-        description: Milliseconds epoch
+        description: Started timestamp in milliseconds epoch
+        example: 1773000000000
         type: integer
       state:
-        $ref: '#/definitions/session.StatementState'
+        allOf:
+        - $ref: '#/definitions/session.StatementState'
+        description: State of the statement execution
+        example: available
+      tags:
+        description: Tags associated with the statement
+        items:
+          type: string
+        type: array
     type: object
   session.StatementOutput:
     properties:
       data:
         additionalProperties: true
-        description: e.g. "application/json" -> QueryResult or "text/plain" -> string
+        description: Data contains output formats, e.g. "application/json" -> QueryResult
+          or "text/plain" -> string
         type: object
       ename:
+        description: Ename is the error name if execution failed
+        example: AnalysisException
         type: string
       evalue:
+        description: Evalue is the error description if execution failed
+        example: Table or view not found
         type: string
       execution_count:
+        description: ExecutionCount is the sequence number of execution
+        example: 0
         type: integer
       status:
-        description: '"ok" or "error"'
+        description: Status of the execution ("ok" or "error")
+        example: ok
         type: string
       traceback:
+        description: Traceback contains stack traces if execution failed
         items:
           type: string
         type: array
@@ -149,16 +271,23 @@ definitions:
     - StatementCancelled
 host: localhost:8998
 info:
-  contact: {}
-  description: Apache Livy successor working on Spark 4.0 and Spark Connect.
-  title: Livy-Next API
-  version: "1.0"
+  contact:
+    name: Livy-Next Maintainers
+  description: |-
+    High-performance, lightweight Apache Livy successor designed for Spark 4.x and Apache Spark Connect.
+    Features interactive Spark session management, decoupled identity, multi-tenancy, statement execution, and result pagination.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Livy-Next REST API
+  version: 1.0.0
 paths:
   /sessions:
     get:
       consumes:
       - application/json
-      description: Get a list of all active interactive sessions
+      description: Get a list of all active interactive sessions along with server
+        idle and dead timeout settings
       produces:
       - application/json
       responses:
@@ -172,7 +301,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new interactive session and connect to Spark Connect
+      description: Create a new interactive session and connect to Spark Connect with
+        isolated session UUID, multi-tenant user identity, and custom configuration
       parameters:
       - description: Create Session Request
         in: body
@@ -190,15 +320,11 @@ paths:
         "400":
           description: Invalid request payload
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "500":
           description: Failed to connect to Spark Connect
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Create a new session
       tags:
       - sessions
@@ -206,9 +332,11 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Close and terminate a specific session
+      description: Close and terminate a specific session, releasing Spark Connect
+        resources
       parameters:
       - description: Session ID
+        example: 0
         in: path
         name: id
         required: true
@@ -217,32 +345,28 @@ paths:
       - application/json
       responses:
         "200":
-          description: Session deleted msg
+          description: Session deleted message
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.DeleteSessionResponse'
         "400":
           description: Invalid session ID
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Delete session
       tags:
       - sessions
     get:
       consumes:
       - application/json
-      description: Get details and state of a specific session
+      description: Get state, application info, Spark UI, and Spark Connect UI URLs
+        for a specific session
       parameters:
       - description: Session ID
+        example: 0
         in: path
         name: id
         required: true
@@ -257,15 +381,11 @@ paths:
         "400":
           description: Invalid session ID
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Get session details
       tags:
       - sessions
@@ -273,12 +393,24 @@ paths:
     get:
       consumes:
       - application/json
-      description: List all statements submitted to a session
+      description: List all statements submitted to a session with pagination support
       parameters:
       - description: Session ID
+        example: 0
         in: path
         name: id
         required: true
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        example: 0
+        in: query
+        name: from
+        type: integer
+      - description: Number of statements to return
+        example: 10
+        in: query
+        name: size
         type: integer
       produces:
       - application/json
@@ -290,24 +422,22 @@ paths:
         "400":
           description: Invalid session ID
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: List statements
       tags:
       - statements
     post:
       consumes:
       - application/json
-      description: Submit a SQL statement for execution in a session
+      description: Submit a SQL statement for asynchronous execution within a session
+        with optional tagging
       parameters:
       - description: Session ID
+        example: 0
         in: path
         name: id
         required: true
@@ -326,17 +456,13 @@ paths:
           schema:
             $ref: '#/definitions/session.Statement'
         "400":
-          description: Invalid payload/ID
+          description: Invalid payload or terminated session
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Submit a statement
       tags:
       - statements
@@ -344,17 +470,31 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get execution state and results of a statement
+      description: Get execution state, progress, and result rows of a statement with
+        row pagination
       parameters:
       - description: Session ID
+        example: 0
         in: path
         name: id
         required: true
         type: integer
       - description: Statement ID
+        example: 0
         in: path
         name: statementId
         required: true
+        type: integer
+      - default: 0
+        description: Result row offset for pagination
+        example: 0
+        in: query
+        name: from
+        type: integer
+      - description: Maximum number of rows to return
+        example: 50
+        in: query
+        name: size
         type: integer
       produces:
       - application/json
@@ -364,17 +504,13 @@ paths:
           schema:
             $ref: '#/definitions/session.Statement'
         "400":
-          description: Invalid session/statement ID
+          description: Invalid session or statement ID
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "404":
-          description: Session/Statement not found
+          description: Session or statement not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Get statement details
       tags:
       - statements
@@ -382,14 +518,16 @@ paths:
     post:
       consumes:
       - application/json
-      description: Cancel a statement execution inside a session
+      description: Cancel a running or waiting statement execution inside a session
       parameters:
       - description: Session ID
+        example: 0
         in: path
         name: id
         required: true
         type: integer
       - description: Statement ID
+        example: 0
         in: path
         name: statementId
         required: true
@@ -398,24 +536,23 @@ paths:
       - application/json
       responses:
         "200":
-          description: 'msg: cancelled'
+          description: Statement cancelled message
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.CancelStatementResponse'
         "400":
-          description: Invalid session/statement ID
+          description: Invalid session or statement ID, or statement already completed
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
         "404":
-          description: Session/Statement not found
+          description: Session or statement not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResponse'
       summary: Cancel a statement
       tags:
       - statements
 swagger: "2.0"
+tags:
+- description: Interactive Spark Connect session management and lifecycle operations
+  name: sessions
+- description: Asynchronous statement submission, cancellation, and result pagination
+  name: statements

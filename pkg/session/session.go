@@ -56,11 +56,16 @@ type SessionCreateParams struct {
 
 // QueryResult represents the parsed results of a Spark SQL statement with optional pagination.
 type QueryResult struct {
+	// Schema of the result rows (e.g. StructType)
 	Schema interface{}     `json:"schema"`
+	// Data contains the row values as a 2D array
 	Data   [][]interface{} `json:"data"`
-	Total  int             `json:"total,omitempty"`
-	From   int             `json:"from,omitempty"`
-	Size   int             `json:"size,omitempty"`
+	// Total is the total number of rows produced by the query
+	Total  int             `json:"total,omitempty" example:"100"`
+	// From is the row offset of this page
+	From   int             `json:"from,omitempty" example:"0"`
+	// Size is the maximum number of rows returned in this page
+	Size   int             `json:"size,omitempty" example:"10"`
 }
 
 // SchemaField represents a single field inside a Spark Schema struct.
@@ -79,23 +84,37 @@ type Schema struct {
 
 // StatementOutput represents the final output of a statement.
 type StatementOutput struct {
-	Status         string                 `json:"status"` // "ok" or "error"
-	ExecutionCount int                    `json:"execution_count"`
-	Data           map[string]interface{} `json:"data"` // e.g. "application/json" -> QueryResult or "text/plain" -> string
-	Ename          string                 `json:"ename,omitempty"`
-	Evalue         string                 `json:"evalue,omitempty"`
+	// Status of the execution ("ok" or "error")
+	Status         string                 `json:"status" example:"ok"`
+	// ExecutionCount is the sequence number of execution
+	ExecutionCount int                    `json:"execution_count" example:"0"`
+	// Data contains output formats, e.g. "application/json" -> QueryResult or "text/plain" -> string
+	Data           map[string]interface{} `json:"data"`
+	// Ename is the error name if execution failed
+	Ename          string                 `json:"ename,omitempty" example:"AnalysisException"`
+	// Evalue is the error description if execution failed
+	Evalue         string                 `json:"evalue,omitempty" example:"Table or view not found"`
+	// Traceback contains stack traces if execution failed
 	Traceback      []string               `json:"traceback,omitempty"`
 }
 
 // Statement represents a code statement executed within a Session.
 type Statement struct {
-	ID        int              `json:"id"`
-	Code      string           `json:"code"`
-	State     StatementState   `json:"state"`
+	// ID of the statement within the session
+	ID        int              `json:"id" example:"0"`
+	// Code executed by the statement
+	Code      string           `json:"code" example:"SELECT 1 + 1"`
+	// State of the statement execution
+	State     StatementState   `json:"state" example:"available"`
+	// Output results or error details
 	Output    *StatementOutput `json:"output,omitempty"`
-	Progress  float64          `json:"progress"`
-	Started   int64            `json:"started,omitempty"`   // Milliseconds epoch
-	Completed int64            `json:"completed,omitempty"` // Milliseconds epoch
+	// Progress of statement execution (0.0 to 1.0)
+	Progress  float64          `json:"progress" example:"1.0"`
+	// Started timestamp in milliseconds epoch
+	Started   int64            `json:"started,omitempty" example:"1773000000000"`
+	// Completed timestamp in milliseconds epoch
+	Completed int64            `json:"completed,omitempty" example:"1773000001200"`
+	// Tags associated with the statement
 	Tags      []string         `json:"tags,omitempty"`
 
 	cancelFunc context.CancelFunc `json:"-"`
@@ -103,19 +122,33 @@ type Statement struct {
 
 // Session represents an interactive Livy session.
 type Session struct {
-	ID           int               `json:"id"`
-	Name         string            `json:"name,omitempty"`
-	AppID        string            `json:"appId,omitempty"`
-	SessionID    string            `json:"sessionId,omitempty"`
-	UserID       string            `json:"userId,omitempty"`
-	UserAgent    string            `json:"userAgent,omitempty"`
-	Owner        string            `json:"owner,omitempty"`
-	ProxyUser    string            `json:"proxyUser,omitempty"`
-	State        SessionState      `json:"state"`
-	Kind         string            `json:"kind"` // "spark", "pyspark", "sparkr"
+	// ID is the numeric session identifier
+	ID           int               `json:"id" example:"0"`
+	// Name is an optional human-readable name for the session
+	Name         string            `json:"name,omitempty" example:"etl-session"`
+	// AppID is the Spark application ID reported by Spark Connect
+	AppID        string            `json:"appId,omitempty" example:"app-20260909-0001"`
+	// SessionID is the Spark Connect UUID session identifier
+	SessionID    string            `json:"sessionId,omitempty" example:"6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f"`
+	// UserID identifies the user in Spark Connect multi-tenancy
+	UserID       string            `json:"userId,omitempty" example:"alice"`
+	// UserAgent is the client user agent string
+	UserAgent    string            `json:"userAgent,omitempty" example:"argus-worker"`
+	// Owner is the user who created the session
+	Owner        string            `json:"owner,omitempty" example:"alice"`
+	// ProxyUser is the impersonated user for legacy Livy compatibility
+	ProxyUser    string            `json:"proxyUser,omitempty" example:"alice"`
+	// State of the session
+	State        SessionState      `json:"state" example:"idle"`
+	// Kind of session: "spark", "pyspark", or "sparkr"
+	Kind         string            `json:"kind" example:"spark"`
+	// AppInfo contains links to Spark UI, Spark Connect UI, and History Server
 	AppInfo      map[string]string `json:"appInfo"`
+	// Log contains server and session lifecycle log lines
 	Log          []string          `json:"log"`
+	// Statements holds statements executed in this session
 	Statements   []*Statement      `json:"-"`
+	// LastActivity timestamp of the most recent operation
 	LastActivity time.Time         `json:"lastActivity"`
 
 	client  SparkClient

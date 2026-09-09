@@ -9,7 +9,13 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "Livy-Next Maintainers"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -17,7 +23,7 @@ const docTemplate = `{
     "paths": {
         "/sessions": {
             "get": {
-                "description": "Get a list of all active interactive sessions",
+                "description": "Get a list of all active interactive sessions along with server idle and dead timeout settings",
                 "consumes": [
                     "application/json"
                 ],
@@ -38,7 +44,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Create a new interactive session and connect to Spark Connect",
+                "description": "Create a new interactive session and connect to Spark Connect with isolated session UUID, multi-tenant user identity, and custom configuration",
                 "consumes": [
                     "application/json"
                 ],
@@ -70,19 +76,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Failed to connect to Spark Connect",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -90,7 +90,7 @@ const docTemplate = `{
         },
         "/sessions/{id}": {
             "get": {
-                "description": "Get details and state of a specific session",
+                "description": "Get state, application info, Spark UI, and Spark Connect UI URLs for a specific session",
                 "consumes": [
                     "application/json"
                 ],
@@ -104,6 +104,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -120,25 +121,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
             },
             "delete": {
-                "description": "Close and terminate a specific session",
+                "description": "Close and terminate a specific session, releasing Spark Connect resources",
                 "consumes": [
                     "application/json"
                 ],
@@ -152,6 +147,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -160,30 +156,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Session deleted msg",
+                        "description": "Session deleted message",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.DeleteSessionResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -191,7 +178,7 @@ const docTemplate = `{
         },
         "/sessions/{id}/statements": {
             "get": {
-                "description": "List all statements submitted to a session",
+                "description": "List all statements submitted to a session with pagination support",
                 "consumes": [
                     "application/json"
                 ],
@@ -205,10 +192,26 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Offset for pagination",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "example": 10,
+                        "description": "Number of statements to return",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -221,25 +224,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
             },
             "post": {
-                "description": "Submit a SQL statement for execution in a session",
+                "description": "Submit a SQL statement for asynchronous execution within a session with optional tagging",
                 "consumes": [
                     "application/json"
                 ],
@@ -253,6 +250,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -276,21 +274,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid payload/ID",
+                        "description": "Invalid payload or terminated session",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -298,7 +290,7 @@ const docTemplate = `{
         },
         "/sessions/{id}/statements/{statementId}": {
             "get": {
-                "description": "Get execution state and results of a statement",
+                "description": "Get execution state, progress, and result rows of a statement with row pagination",
                 "consumes": [
                     "application/json"
                 ],
@@ -312,6 +304,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -319,10 +312,26 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Statement ID",
                         "name": "statementId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "example": 0,
+                        "description": "Result row offset for pagination",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "example": 50,
+                        "description": "Maximum number of rows to return",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -333,21 +342,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid session/statement ID",
+                        "description": "Invalid session or statement ID",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Session/Statement not found",
+                        "description": "Session or statement not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -355,7 +358,7 @@ const docTemplate = `{
         },
         "/sessions/{id}/statements/{statementId}/cancel": {
             "post": {
-                "description": "Cancel a statement execution inside a session",
+                "description": "Cancel a running or waiting statement execution inside a session",
                 "consumes": [
                     "application/json"
                 ],
@@ -369,6 +372,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Session ID",
                         "name": "id",
                         "in": "path",
@@ -376,6 +380,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
+                        "example": 0,
                         "description": "Statement ID",
                         "name": "statementId",
                         "in": "path",
@@ -384,30 +389,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "msg: cancelled",
+                        "description": "Statement cancelled message",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.CancelStatementResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid session/statement ID",
+                        "description": "Invalid session or statement ID, or statement already completed",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Session/Statement not found",
+                        "description": "Session or statement not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     }
                 }
@@ -415,29 +411,67 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "api.CancelStatementResponse": {
+            "type": "object",
+            "properties": {
+                "msg": {
+                    "description": "Msg indicates cancellation status",
+                    "type": "string",
+                    "example": "cancelled"
+                }
+            }
+        },
         "api.CreateSessionRequest": {
             "type": "object",
             "properties": {
                 "conf": {
+                    "description": "Conf contains Spark configuration properties (spark.*)",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
                 "jars": {
+                    "description": "Jars is an optional list of JAR paths to attach to the session",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "kind": {
-                    "type": "string"
+                    "description": "Kind of session: \"spark\", \"pyspark\", or \"sparkr\" (defaults to \"spark\")",
+                    "type": "string",
+                    "example": "spark"
                 },
                 "name": {
-                    "type": "string"
+                    "description": "Name is an optional human-readable name for the session",
+                    "type": "string",
+                    "example": "etl-session"
                 },
                 "proxyUser": {
-                    "type": "string"
+                    "description": "ProxyUser for legacy Apache Livy compatibility",
+                    "type": "string",
+                    "example": "alice"
+                },
+                "sessionId": {
+                    "description": "SessionID is a client-specified UUID for Spark Connect session isolation and reconnects",
+                    "type": "string",
+                    "example": "6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f"
+                },
+                "token": {
+                    "description": "Token is the authentication token or bearer token forwarded to Spark Connect",
+                    "type": "string",
+                    "example": "secret-token"
+                },
+                "userAgent": {
+                    "description": "UserAgent identifies the client connecting to Spark Connect",
+                    "type": "string",
+                    "example": "argus-worker"
+                },
+                "userId": {
+                    "description": "UserID for Spark Connect multi-tenancy (overrides proxyUser if provided)",
+                    "type": "string",
+                    "example": "alice"
                 }
             }
         },
@@ -445,7 +479,36 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string"
+                    "description": "Code is the SQL statement string to execute",
+                    "type": "string",
+                    "example": "SELECT 'hello world' AS msg, 42 AS num"
+                },
+                "tags": {
+                    "description": "Tags is an optional list of tags to label and track the statement in Spark Connect",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "api.DeleteSessionResponse": {
+            "type": "object",
+            "properties": {
+                "msg": {
+                    "description": "Msg indicates deletion status",
+                    "type": "string",
+                    "example": "deleted"
+                }
+            }
+        },
+        "api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "Error describes the error message",
+                    "type": "string",
+                    "example": "Session not found"
                 }
             }
         },
@@ -453,24 +516,31 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "deadTimeout": {
-                    "description": "in milliseconds",
-                    "type": "integer"
+                    "description": "DeadTimeout is the server dead timeout threshold in milliseconds",
+                    "type": "integer",
+                    "example": 86400000
                 },
                 "from": {
-                    "type": "integer"
+                    "description": "From is the result offset for pagination",
+                    "type": "integer",
+                    "example": 0
                 },
                 "idleTimeout": {
-                    "description": "in milliseconds",
-                    "type": "integer"
+                    "description": "IdleTimeout is the server idle timeout threshold in milliseconds",
+                    "type": "integer",
+                    "example": 259200000
                 },
                 "sessions": {
+                    "description": "Sessions is the list of active sessions",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/session.Session"
                     }
                 },
                 "total": {
-                    "type": "integer"
+                    "description": "Total is the total number of active sessions",
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -478,13 +548,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "statements": {
+                    "description": "Statements is the list of submitted statements",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/session.Statement"
                     }
                 },
                 "total_statements": {
-                    "type": "integer"
+                    "description": "TotalStatements is the total count of statements in the session",
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -492,44 +565,76 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "appId": {
-                    "type": "string"
+                    "description": "AppID is the Spark application ID reported by Spark Connect",
+                    "type": "string",
+                    "example": "app-20260909-0001"
                 },
                 "appInfo": {
+                    "description": "AppInfo contains links to Spark UI, Spark Connect UI, and History Server",
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
                 },
                 "id": {
-                    "type": "integer"
+                    "description": "ID is the numeric session identifier",
+                    "type": "integer",
+                    "example": 0
                 },
                 "kind": {
-                    "description": "\"spark\", \"pyspark\", \"sparkr\"",
-                    "type": "string"
+                    "description": "Kind of session: \"spark\", \"pyspark\", or \"sparkr\"",
+                    "type": "string",
+                    "example": "spark"
                 },
                 "lastActivity": {
+                    "description": "LastActivity timestamp of the most recent operation",
                     "type": "string"
                 },
                 "log": {
+                    "description": "Log contains server and session lifecycle log lines",
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
                 "name": {
-                    "type": "string"
+                    "description": "Name is an optional human-readable name for the session",
+                    "type": "string",
+                    "example": "etl-session"
                 },
                 "owner": {
-                    "type": "string"
+                    "description": "Owner is the user who created the session",
+                    "type": "string",
+                    "example": "alice"
                 },
                 "proxyUser": {
-                    "type": "string"
+                    "description": "ProxyUser is the impersonated user for legacy Livy compatibility",
+                    "type": "string",
+                    "example": "alice"
                 },
                 "sessionId": {
-                    "type": "string"
+                    "description": "SessionID is the Spark Connect UUID session identifier",
+                    "type": "string",
+                    "example": "6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f"
                 },
                 "state": {
-                    "$ref": "#/definitions/session.SessionState"
+                    "description": "State of the session",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/session.SessionState"
+                        }
+                    ],
+                    "example": "idle"
+                },
+                "userAgent": {
+                    "description": "UserAgent is the client user agent string",
+                    "type": "string",
+                    "example": "argus-worker"
+                },
+                "userId": {
+                    "description": "UserID identifies the user in Spark Connect multi-tenancy",
+                    "type": "string",
+                    "example": "alice"
                 }
             }
         },
@@ -554,27 +659,53 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string"
+                    "description": "Code executed by the statement",
+                    "type": "string",
+                    "example": "SELECT 1 + 1"
                 },
                 "completed": {
-                    "description": "Milliseconds epoch",
-                    "type": "integer"
+                    "description": "Completed timestamp in milliseconds epoch",
+                    "type": "integer",
+                    "example": 1773000001200
                 },
                 "id": {
-                    "type": "integer"
+                    "description": "ID of the statement within the session",
+                    "type": "integer",
+                    "example": 0
                 },
                 "output": {
-                    "$ref": "#/definitions/session.StatementOutput"
+                    "description": "Output results or error details",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/session.StatementOutput"
+                        }
+                    ]
                 },
                 "progress": {
-                    "type": "number"
+                    "description": "Progress of statement execution (0.0 to 1.0)",
+                    "type": "number",
+                    "example": 1
                 },
                 "started": {
-                    "description": "Milliseconds epoch",
-                    "type": "integer"
+                    "description": "Started timestamp in milliseconds epoch",
+                    "type": "integer",
+                    "example": 1773000000000
                 },
                 "state": {
-                    "$ref": "#/definitions/session.StatementState"
+                    "description": "State of the statement execution",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/session.StatementState"
+                        }
+                    ],
+                    "example": "available"
+                },
+                "tags": {
+                    "description": "Tags associated with the statement",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -582,24 +713,32 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "data": {
-                    "description": "e.g. \"application/json\" -\u003e QueryResult or \"text/plain\" -\u003e string",
+                    "description": "Data contains output formats, e.g. \"application/json\" -\u003e QueryResult or \"text/plain\" -\u003e string",
                     "type": "object",
                     "additionalProperties": true
                 },
                 "ename": {
-                    "type": "string"
+                    "description": "Ename is the error name if execution failed",
+                    "type": "string",
+                    "example": "AnalysisException"
                 },
                 "evalue": {
-                    "type": "string"
+                    "description": "Evalue is the error description if execution failed",
+                    "type": "string",
+                    "example": "Table or view not found"
                 },
                 "execution_count": {
-                    "type": "integer"
+                    "description": "ExecutionCount is the sequence number of execution",
+                    "type": "integer",
+                    "example": 0
                 },
                 "status": {
-                    "description": "\"ok\" or \"error\"",
-                    "type": "string"
+                    "description": "Status of the execution (\"ok\" or \"error\")",
+                    "type": "string",
+                    "example": "ok"
                 },
                 "traceback": {
+                    "description": "Traceback contains stack traces if execution failed",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -626,17 +765,27 @@ const docTemplate = `{
                 "StatementCancelled"
             ]
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "Interactive Spark Connect session management and lifecycle operations",
+            "name": "sessions"
+        },
+        {
+            "description": "Asynchronous statement submission, cancellation, and result pagination",
+            "name": "statements"
+        }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "1.0.0",
 	Host:             "localhost:8998",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Livy-Next API",
-	Description:      "Apache Livy successor working on Spark 4.0 and Spark Connect.",
+	Title:            "Livy-Next REST API",
+	Description:      "High-performance, lightweight Apache Livy successor designed for Spark 4.x and Apache Spark Connect.\nFeatures interactive Spark session management, decoupled identity, multi-tenancy, statement execution, and result pagination.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

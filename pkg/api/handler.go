@@ -31,39 +31,93 @@ func NewHandler(manager *session.Manager, createClient ClientCreator, sparkUIUrl
 	}
 }
 
+// CreateSessionRequest specifies the configuration and identity parameters for creating a new session.
 type CreateSessionRequest struct {
-	Kind      string            `json:"kind"`
-	ProxyUser string            `json:"proxyUser"`
-	UserID    string            `json:"userId"`
-	SessionID string            `json:"sessionId"`
-	UserAgent string            `json:"userAgent"`
-	Token     string            `json:"token"`
-	Name      string            `json:"name"`
-	Conf      map[string]string `json:"conf"`
-	Jars      []string          `json:"jars"`
+	// Kind of session: "spark", "pyspark", or "sparkr" (defaults to "spark")
+	Kind string `json:"kind" example:"spark"`
+
+	// ProxyUser for legacy Apache Livy compatibility
+	ProxyUser string `json:"proxyUser,omitempty" example:"alice"`
+
+	// UserID for Spark Connect multi-tenancy (overrides proxyUser if provided)
+	UserID string `json:"userId,omitempty" example:"alice"`
+
+	// SessionID is a client-specified UUID for Spark Connect session isolation and reconnects
+	SessionID string `json:"sessionId,omitempty" example:"6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f"`
+
+	// UserAgent identifies the client connecting to Spark Connect
+	UserAgent string `json:"userAgent,omitempty" example:"argus-worker"`
+
+	// Token is the authentication token or bearer token forwarded to Spark Connect
+	Token string `json:"token,omitempty" example:"secret-token"`
+
+	// Name is an optional human-readable name for the session
+	Name string `json:"name,omitempty" example:"etl-session"`
+
+	// Conf contains Spark configuration properties (spark.*)
+	Conf map[string]string `json:"conf,omitempty"`
+
+	// Jars is an optional list of JAR paths to attach to the session
+	Jars []string `json:"jars,omitempty"`
 }
 
+// SessionsResponse represents the response when listing active sessions.
 type SessionsResponse struct {
-	From        int                `json:"from"`
-	Total       int                `json:"total"`
-	Sessions    []*session.Session `json:"sessions"`
-	IdleTimeout int64              `json:"idleTimeout"` // in milliseconds
-	DeadTimeout int64              `json:"deadTimeout"` // in milliseconds
+	// From is the result offset for pagination
+	From int `json:"from" example:"0"`
+
+	// Total is the total number of active sessions
+	Total int `json:"total" example:"1"`
+
+	// Sessions is the list of active sessions
+	Sessions []*session.Session `json:"sessions"`
+
+	// IdleTimeout is the server idle timeout threshold in milliseconds
+	IdleTimeout int64 `json:"idleTimeout" example:"259200000"`
+
+	// DeadTimeout is the server dead timeout threshold in milliseconds
+	DeadTimeout int64 `json:"deadTimeout" example:"86400000"`
 }
 
+// CreateStatementRequest specifies a SQL statement to execute with optional tracking tags.
 type CreateStatementRequest struct {
-	Code string   `json:"code"`
+	// Code is the SQL statement string to execute
+	Code string `json:"code" example:"SELECT 'hello world' AS msg, 42 AS num"`
+
+	// Tags is an optional list of tags to label and track the statement in Spark Connect
 	Tags []string `json:"tags,omitempty"`
 }
 
+// StatementsResponse represents the response when listing statements within a session.
 type StatementsResponse struct {
-	TotalStatements int                  `json:"total_statements"`
-	Statements      []*session.Statement `json:"statements"`
+	// TotalStatements is the total count of statements in the session
+	TotalStatements int `json:"total_statements" example:"1"`
+
+	// Statements is the list of submitted statements
+	Statements []*session.Statement `json:"statements"`
+}
+
+// ErrorResponse represents an error response payload.
+type ErrorResponse struct {
+	// Error describes the error message
+	Error string `json:"error" example:"Session not found"`
+}
+
+// DeleteSessionResponse represents the response when a session is deleted.
+type DeleteSessionResponse struct {
+	// Msg indicates deletion status
+	Msg string `json:"msg" example:"deleted"`
+}
+
+// CancelStatementResponse represents the response when a statement is cancelled.
+type CancelStatementResponse struct {
+	// Msg indicates cancellation status
+	Msg string `json:"msg" example:"cancelled"`
 }
 
 // ListSessions godoc
 // @Summary List all active sessions
-// @Description Get a list of all active interactive sessions
+// @Description Get a list of all active interactive sessions along with server idle and dead timeout settings
 // @Tags sessions
 // @Accept json
 // @Produce json
@@ -83,14 +137,14 @@ func (h *Handler) ListSessions(w http.ResponseWriter, r *http.Request) {
 
 // CreateSession godoc
 // @Summary Create a new session
-// @Description Create a new interactive session and connect to Spark Connect
+// @Description Create a new interactive session and connect to Spark Connect with isolated session UUID, multi-tenant user identity, and custom configuration
 // @Tags sessions
 // @Accept json
 // @Produce json
 // @Param request body CreateSessionRequest true "Create Session Request"
 // @Success 201 {object} session.Session
-// @Failure 400 {object} map[string]string "Invalid request payload"
-// @Failure 500 {object} map[string]string "Failed to connect to Spark Connect"
+// @Failure 400 {object} ErrorResponse "Invalid request payload"
+// @Failure 500 {object} ErrorResponse "Failed to connect to Spark Connect"
 // @Router /sessions [post]
 func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	var req CreateSessionRequest
@@ -146,14 +200,14 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 
 // GetSession godoc
 // @Summary Get session details
-// @Description Get details and state of a specific session
+// @Description Get state, application info, Spark UI, and Spark Connect UI URLs for a specific session
 // @Tags sessions
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID"
+// @Param id path int true "Session ID" example(0)
 // @Success 200 {object} session.Session
-// @Failure 400 {object} map[string]string "Invalid session ID"
-// @Failure 404 {object} map[string]string "Session not found"
+// @Failure 400 {object} ErrorResponse "Invalid session ID"
+// @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id} [get]
 func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -173,14 +227,14 @@ func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
 
 // DeleteSession godoc
 // @Summary Delete session
-// @Description Close and terminate a specific session
+// @Description Close and terminate a specific session, releasing Spark Connect resources
 // @Tags sessions
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID"
-// @Success 200 {object} map[string]string "Session deleted msg"
-// @Failure 400 {object} map[string]string "Invalid session ID"
-// @Failure 404 {object} map[string]string "Session not found"
+// @Param id path int true "Session ID" example(0)
+// @Success 200 {object} DeleteSessionResponse "Session deleted message"
+// @Failure 400 {object} ErrorResponse "Invalid session ID"
+// @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id} [delete]
 func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -194,20 +248,20 @@ func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{"msg": "deleted"})
+	respondJSON(w, http.StatusOK, DeleteSessionResponse{Msg: "deleted"})
 }
 
 // SubmitStatement godoc
 // @Summary Submit a statement
-// @Description Submit a SQL statement for execution in a session
+// @Description Submit a SQL statement for asynchronous execution within a session with optional tagging
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID"
+// @Param id path int true "Session ID" example(0)
 // @Param request body CreateStatementRequest true "Submit Statement Request"
 // @Success 201 {object} session.Statement
-// @Failure 400 {object} map[string]string "Invalid payload/ID"
-// @Failure 404 {object} map[string]string "Session not found"
+// @Failure 400 {object} ErrorResponse "Invalid payload or terminated session"
+// @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id}/statements [post]
 func (h *Handler) SubmitStatement(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -244,16 +298,16 @@ func (h *Handler) SubmitStatement(w http.ResponseWriter, r *http.Request) {
 
 // ListStatements godoc
 // @Summary List statements
-// @Description List all statements submitted to a session
+// @Description List all statements submitted to a session with pagination support
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID"
-// @Param from query int false "Offset for pagination"
-// @Param size query int false "Number of statements to return"
+// @Param id path int true "Session ID" example(0)
+// @Param from query int false "Offset for pagination" default(0) example(0)
+// @Param size query int false "Number of statements to return" example(10)
 // @Success 200 {object} StatementsResponse
-// @Failure 400 {object} map[string]string "Invalid session ID"
-// @Failure 404 {object} map[string]string "Session not found"
+// @Failure 400 {object} ErrorResponse "Invalid session ID"
+// @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id}/statements [get]
 func (h *Handler) ListStatements(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -291,17 +345,17 @@ func (h *Handler) ListStatements(w http.ResponseWriter, r *http.Request) {
 
 // GetStatement godoc
 // @Summary Get statement details
-// @Description Get execution state and results of a statement with optional row pagination
+// @Description Get execution state, progress, and result rows of a statement with row pagination
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID"
-// @Param statementId path int true "Statement ID"
-// @Param from query int false "Result row offset"
-// @Param size query int false "Maximum number of rows to return"
+// @Param id path int true "Session ID" example(0)
+// @Param statementId path int true "Statement ID" example(0)
+// @Param from query int false "Result row offset for pagination" default(0) example(0)
+// @Param size query int false "Maximum number of rows to return" example(50)
 // @Success 200 {object} session.Statement
-// @Failure 400 {object} map[string]string "Invalid session/statement ID"
-// @Failure 404 {object} map[string]string "Session/Statement not found"
+// @Failure 400 {object} ErrorResponse "Invalid session or statement ID"
+// @Failure 404 {object} ErrorResponse "Session or statement not found"
 // @Router /sessions/{id}/statements/{statementId} [get]
 func (h *Handler) GetStatement(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -346,15 +400,15 @@ func (h *Handler) GetStatement(w http.ResponseWriter, r *http.Request) {
 
 // CancelStatement godoc
 // @Summary Cancel a statement
-// @Description Cancel a statement execution inside a session
+// @Description Cancel a running or waiting statement execution inside a session
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID"
-// @Param statementId path int true "Statement ID"
-// @Success 200 {object} map[string]string "msg: cancelled"
-// @Failure 400 {object} map[string]string "Invalid session/statement ID"
-// @Failure 404 {object} map[string]string "Session/Statement not found"
+// @Param id path int true "Session ID" example(0)
+// @Param statementId path int true "Statement ID" example(0)
+// @Success 200 {object} CancelStatementResponse "Statement cancelled message"
+// @Failure 400 {object} ErrorResponse "Invalid session or statement ID, or statement already completed"
+// @Failure 404 {object} ErrorResponse "Session or statement not found"
 // @Router /sessions/{id}/statements/{statementId}/cancel [post]
 func (h *Handler) CancelStatement(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
@@ -381,7 +435,7 @@ func (h *Handler) CancelStatement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, map[string]string{"msg": "cancelled"})
+	respondJSON(w, http.StatusOK, CancelStatementResponse{Msg: "cancelled"})
 }
 
 func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
@@ -397,5 +451,5 @@ func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 }
 
 func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, map[string]string{"error": message})
+	respondJSON(w, status, ErrorResponse{Error: message})
 }
