@@ -90,7 +90,7 @@ const docTemplate = `{
         },
         "/sessions/{id}": {
             "get": {
-                "description": "Get state, application info, Spark UI, and Spark Connect UI URLs for a specific session",
+                "description": "Get state, application info, Spark UI, and Spark Connect UI URLs for a specific session by numeric ID or UUID",
                 "consumes": [
                     "application/json"
                 ],
@@ -103,9 +103,9 @@ const docTemplate = `{
                 "summary": "Get session details",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "example": 0,
-                        "description": "Session ID",
+                        "type": "string",
+                        "example": "\"0\"",
+                        "description": "Session ID (integer ID or Spark Connect UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -118,12 +118,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/session.Session"
                         }
                     },
-                    "400": {
-                        "description": "Invalid session ID",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -133,7 +127,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Close and terminate a specific session, releasing Spark Connect resources",
+                "description": "Close and terminate a specific session by numeric ID or UUID, releasing Spark Connect resources",
                 "consumes": [
                     "application/json"
                 ],
@@ -146,9 +140,9 @@ const docTemplate = `{
                 "summary": "Delete session",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "example": 0,
-                        "description": "Session ID",
+                        "type": "string",
+                        "example": "\"0\"",
+                        "description": "Session ID (integer ID or Spark Connect UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -159,12 +153,6 @@ const docTemplate = `{
                         "description": "Session deleted message",
                         "schema": {
                             "$ref": "#/definitions/api.DeleteSessionResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid session ID",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
                         }
                     },
                     "404": {
@@ -191,9 +179,9 @@ const docTemplate = `{
                 "summary": "List statements",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "example": 0,
-                        "description": "Session ID",
+                        "type": "string",
+                        "example": "\"0\"",
+                        "description": "Session ID (integer ID or Spark Connect UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -221,12 +209,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/api.StatementsResponse"
                         }
                     },
-                    "400": {
-                        "description": "Invalid session ID",
-                        "schema": {
-                            "$ref": "#/definitions/api.ErrorResponse"
-                        }
-                    },
                     "404": {
                         "description": "Session not found",
                         "schema": {
@@ -249,9 +231,9 @@ const docTemplate = `{
                 "summary": "Submit a statement",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "example": 0,
-                        "description": "Session ID",
+                        "type": "string",
+                        "example": "\"0\"",
+                        "description": "Session ID (integer ID or Spark Connect UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -303,9 +285,9 @@ const docTemplate = `{
                 "summary": "Get statement details",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "example": 0,
-                        "description": "Session ID",
+                        "type": "string",
+                        "example": "\"0\"",
+                        "description": "Session ID (integer ID or Spark Connect UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -342,7 +324,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid session or statement ID",
+                        "description": "Invalid statement ID",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }
@@ -371,9 +353,9 @@ const docTemplate = `{
                 "summary": "Cancel a statement",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "example": 0,
-                        "description": "Session ID",
+                        "type": "string",
+                        "example": "\"0\"",
+                        "description": "Session ID (integer ID or Spark Connect UUID)",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -395,7 +377,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid session or statement ID, or statement already completed",
+                        "description": "Invalid statement ID, or statement already completed",
                         "schema": {
                             "$ref": "#/definitions/api.ErrorResponse"
                         }

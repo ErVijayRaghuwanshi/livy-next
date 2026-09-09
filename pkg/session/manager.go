@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -55,6 +56,28 @@ func (m *Manager) GetSession(id int) (*Session, bool) {
 	return sess, exists
 }
 
+// GetSessionByIdentifier retrieves a session by numeric ID or by Spark Connect UUID sessionId.
+func (m *Manager) GetSessionByIdentifier(identifier string) (*Session, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// 1. Try parsing as numeric integer ID (legacy Livy style)
+	if id, err := strconv.Atoi(identifier); err == nil {
+		if sess, exists := m.sessions[id]; exists {
+			return sess, true
+		}
+	}
+
+	// 2. Search by Spark Connect UUID sessionId
+	for _, sess := range m.sessions {
+		if sess.SessionID == identifier {
+			return sess, true
+		}
+	}
+
+	return nil, false
+}
+
 // ListSessions returns a slice of all registered sessions.
 func (m *Manager) ListSessions() []*Session {
 	m.mu.RLock()
@@ -91,6 +114,15 @@ func (m *Manager) DeleteSession(id int) error {
 	}
 	m.mu.Unlock()
 
+	return sess.Close()
+}
+
+// DeleteSessionByIdentifier closes the session identified by numeric ID or UUID.
+func (m *Manager) DeleteSessionByIdentifier(identifier string) error {
+	sess, exists := m.GetSessionByIdentifier(identifier)
+	if !exists {
+		return errors.New("session not found")
+	}
 	return sess.Close()
 }
 

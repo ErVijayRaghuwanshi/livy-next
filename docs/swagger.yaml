@@ -332,15 +332,15 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Close and terminate a specific session, releasing Spark Connect
-        resources
+      description: Close and terminate a specific session by numeric ID or UUID, releasing
+        Spark Connect resources
       parameters:
-      - description: Session ID
-        example: 0
+      - description: Session ID (integer ID or Spark Connect UUID)
+        example: '"0"'
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -348,10 +348,6 @@ paths:
           description: Session deleted message
           schema:
             $ref: '#/definitions/api.DeleteSessionResponse'
-        "400":
-          description: Invalid session ID
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
@@ -363,14 +359,14 @@ paths:
       consumes:
       - application/json
       description: Get state, application info, Spark UI, and Spark Connect UI URLs
-        for a specific session
+        for a specific session by numeric ID or UUID
       parameters:
-      - description: Session ID
-        example: 0
+      - description: Session ID (integer ID or Spark Connect UUID)
+        example: '"0"'
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -378,10 +374,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/session.Session'
-        "400":
-          description: Invalid session ID
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
@@ -395,12 +387,12 @@ paths:
       - application/json
       description: List all statements submitted to a session with pagination support
       parameters:
-      - description: Session ID
-        example: 0
+      - description: Session ID (integer ID or Spark Connect UUID)
+        example: '"0"'
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - default: 0
         description: Offset for pagination
         example: 0
@@ -419,10 +411,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/api.StatementsResponse'
-        "400":
-          description: Invalid session ID
-          schema:
-            $ref: '#/definitions/api.ErrorResponse'
         "404":
           description: Session not found
           schema:
@@ -436,12 +424,12 @@ paths:
       description: Submit a SQL statement for asynchronous execution within a session
         with optional tagging
       parameters:
-      - description: Session ID
-        example: 0
+      - description: Session ID (integer ID or Spark Connect UUID)
+        example: '"0"'
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: Submit Statement Request
         in: body
         name: request
@@ -473,12 +461,12 @@ paths:
       description: Get execution state, progress, and result rows of a statement with
         row pagination
       parameters:
-      - description: Session ID
-        example: 0
+      - description: Session ID (integer ID or Spark Connect UUID)
+        example: '"0"'
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: Statement ID
         example: 0
         in: path
@@ -504,7 +492,7 @@ paths:
           schema:
             $ref: '#/definitions/session.Statement'
         "400":
-          description: Invalid session or statement ID
+          description: Invalid statement ID
           schema:
             $ref: '#/definitions/api.ErrorResponse'
         "404":
@@ -520,12 +508,12 @@ paths:
       - application/json
       description: Cancel a running or waiting statement execution inside a session
       parameters:
-      - description: Session ID
-        example: 0
+      - description: Session ID (integer ID or Spark Connect UUID)
+        example: '"0"'
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: Statement ID
         example: 0
         in: path
@@ -540,7 +528,7 @@ paths:
           schema:
             $ref: '#/definitions/api.CancelStatementResponse'
         "400":
-          description: Invalid session or statement ID, or statement already completed
+          description: Invalid statement ID, or statement already completed
           schema:
             $ref: '#/definitions/api.ErrorResponse'
         "404":

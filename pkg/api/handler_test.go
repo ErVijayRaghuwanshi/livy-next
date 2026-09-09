@@ -264,4 +264,17 @@ func TestLivyAPI(t *testing.T) {
 	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
+
+	// 7. Verify UUID SessionID Lookup
+	// Query session using the UUID instead of numeric ID 0
+	uuidSessionID := "550e8400-e29b-41d4-a716-446655440000"
+	req, _ = http.NewRequest("GET", "/sessions/"+uuidSessionID, nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var uuidLookupSess session.Session
+	err = json.Unmarshal(rr.Body.Bytes(), &uuidLookupSess)
+	assert.NoError(t, err)
+	assert.Equal(t, uuidSessionID, uuidLookupSess.SessionID)
 }

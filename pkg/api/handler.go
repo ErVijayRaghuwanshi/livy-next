@@ -200,23 +200,16 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 
 // GetSession godoc
 // @Summary Get session details
-// @Description Get state, application info, Spark UI, and Spark Connect UI URLs for a specific session
+// @Description Get state, application info, Spark UI, and Spark Connect UI URLs for a specific session by numeric ID or UUID
 // @Tags sessions
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID" example(0)
+// @Param id path string true "Session ID (integer ID or Spark Connect UUID)" example("0")
 // @Success 200 {object} session.Session
-// @Failure 400 {object} ErrorResponse "Invalid session ID"
 // @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id} [get]
 func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid session ID")
-		return
-	}
-
-	sess, exists := h.manager.GetSession(id)
+	sess, exists := h.manager.GetSessionByIdentifier(chi.URLParam(r, "id"))
 	if !exists {
 		respondError(w, http.StatusNotFound, "Session not found")
 		return
@@ -227,23 +220,16 @@ func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
 
 // DeleteSession godoc
 // @Summary Delete session
-// @Description Close and terminate a specific session, releasing Spark Connect resources
+// @Description Close and terminate a specific session by numeric ID or UUID, releasing Spark Connect resources
 // @Tags sessions
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID" example(0)
+// @Param id path string true "Session ID (integer ID or Spark Connect UUID)" example("0")
 // @Success 200 {object} DeleteSessionResponse "Session deleted message"
-// @Failure 400 {object} ErrorResponse "Invalid session ID"
 // @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id} [delete]
 func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid session ID")
-		return
-	}
-
-	if err := h.manager.DeleteSession(id); err != nil {
+	if err := h.manager.DeleteSessionByIdentifier(chi.URLParam(r, "id")); err != nil {
 		respondError(w, http.StatusNotFound, err.Error())
 		return
 	}
@@ -257,20 +243,14 @@ func (h *Handler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID" example(0)
+// @Param id path string true "Session ID (integer ID or Spark Connect UUID)" example("0")
 // @Param request body CreateStatementRequest true "Submit Statement Request"
 // @Success 201 {object} session.Statement
 // @Failure 400 {object} ErrorResponse "Invalid payload or terminated session"
 // @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id}/statements [post]
 func (h *Handler) SubmitStatement(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid session ID")
-		return
-	}
-
-	sess, exists := h.manager.GetSession(id)
+	sess, exists := h.manager.GetSessionByIdentifier(chi.URLParam(r, "id"))
 	if !exists {
 		respondError(w, http.StatusNotFound, "Session not found")
 		return
@@ -302,21 +282,14 @@ func (h *Handler) SubmitStatement(w http.ResponseWriter, r *http.Request) {
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID" example(0)
+// @Param id path string true "Session ID (integer ID or Spark Connect UUID)" example("0")
 // @Param from query int false "Offset for pagination" default(0) example(0)
 // @Param size query int false "Number of statements to return" example(10)
 // @Success 200 {object} StatementsResponse
-// @Failure 400 {object} ErrorResponse "Invalid session ID"
 // @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id}/statements [get]
 func (h *Handler) ListStatements(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid session ID")
-		return
-	}
-
-	sess, exists := h.manager.GetSession(id)
+	sess, exists := h.manager.GetSessionByIdentifier(chi.URLParam(r, "id"))
 	if !exists {
 		respondError(w, http.StatusNotFound, "Session not found")
 		return
@@ -349,22 +322,16 @@ func (h *Handler) ListStatements(w http.ResponseWriter, r *http.Request) {
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID" example(0)
+// @Param id path string true "Session ID (integer ID or Spark Connect UUID)" example("0")
 // @Param statementId path int true "Statement ID" example(0)
 // @Param from query int false "Result row offset for pagination" default(0) example(0)
 // @Param size query int false "Maximum number of rows to return" example(50)
 // @Success 200 {object} session.Statement
-// @Failure 400 {object} ErrorResponse "Invalid session or statement ID"
+// @Failure 400 {object} ErrorResponse "Invalid statement ID"
 // @Failure 404 {object} ErrorResponse "Session or statement not found"
 // @Router /sessions/{id}/statements/{statementId} [get]
 func (h *Handler) GetStatement(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid session ID")
-		return
-	}
-
-	sess, exists := h.manager.GetSession(id)
+	sess, exists := h.manager.GetSessionByIdentifier(chi.URLParam(r, "id"))
 	if !exists {
 		respondError(w, http.StatusNotFound, "Session not found")
 		return
@@ -404,20 +371,14 @@ func (h *Handler) GetStatement(w http.ResponseWriter, r *http.Request) {
 // @Tags statements
 // @Accept json
 // @Produce json
-// @Param id path int true "Session ID" example(0)
+// @Param id path string true "Session ID (integer ID or Spark Connect UUID)" example("0")
 // @Param statementId path int true "Statement ID" example(0)
 // @Success 200 {object} CancelStatementResponse "Statement cancelled message"
-// @Failure 400 {object} ErrorResponse "Invalid session or statement ID, or statement already completed"
+// @Failure 400 {object} ErrorResponse "Invalid statement ID, or statement already completed"
 // @Failure 404 {object} ErrorResponse "Session or statement not found"
 // @Router /sessions/{id}/statements/{statementId}/cancel [post]
 func (h *Handler) CancelStatement(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		respondError(w, http.StatusBadRequest, "Invalid session ID")
-		return
-	}
-
-	sess, exists := h.manager.GetSession(id)
+	sess, exists := h.manager.GetSessionByIdentifier(chi.URLParam(r, "id"))
 	if !exists {
 		respondError(w, http.StatusNotFound, "Session not found")
 		return
