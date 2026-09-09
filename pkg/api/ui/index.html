@@ -726,6 +726,24 @@
             setInterval(updateTimeoutProgressBars, 1000); // Update countdown bars every 1s
         });
 
+        function formatUiUrl(url) {
+            if (!url) return '';
+            try {
+                const parsed = new URL(url, window.location.origin);
+                // If the link uses localhost but browser accessed via LAN IP or hostname, align hostnames
+                if (parsed.hostname === 'localhost' && window.location.hostname !== 'localhost') {
+                    parsed.hostname = window.location.hostname;
+                }
+                // If internal container port 4040 was set, remap to host-mapped Spark UI port 4141
+                if (parsed.port === '4040') {
+                    parsed.port = '4141';
+                }
+                return parsed.toString();
+            } catch (e) {
+                return url;
+            }
+        }
+
         async function loadSessions() {
             try {
                 const res = await fetch('/sessions');
@@ -816,7 +834,7 @@
                 if (s.state === 'dead') badgeClass = 'badge-dead';
 
                 const sessionNameDisplay = s.name ? `${escapeHtml(s.name)} (#${s.id})` : `Session #${s.id}`;
-                const uiUrl = s.appInfo && s.appInfo.sparkUiUrl;
+                const uiUrl = formatUiUrl(s.appInfo && s.appInfo.sparkUiUrl);
                 const appIdHtml = uiUrl ? `<a href="${uiUrl}" target="_blank" style="color:#60a5fa; text-decoration:underline; font-weight: 500;">${s.appId}</a>` : (s.appId || 'N/A');
 
                 return `
@@ -962,8 +980,8 @@
 
             const sparkUiBtn = document.getElementById('detail-spark-ui-btn');
             if (sparkUiBtn) {
-                const uiUrl = sess.appInfo && sess.appInfo.sparkUiUrl;
-                const connectUrl = sess.appInfo && sess.appInfo.sparkConnectUiUrl;
+                const uiUrl = formatUiUrl(sess.appInfo && sess.appInfo.sparkUiUrl);
+                const connectUrl = formatUiUrl(sess.appInfo && sess.appInfo.sparkConnectUiUrl);
                 let btnsHtml = '';
                 if (connectUrl) {
                     btnsHtml += `

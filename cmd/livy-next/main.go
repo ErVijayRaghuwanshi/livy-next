@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -60,7 +61,11 @@ func buildSparkRemoteURI(baseRemote string, userId string, sessionId string, use
 func main() {
 	addr := flag.String("addr", ":8998", "HTTP service address to bind to")
 	sparkRemote := flag.String("spark-remote", "sc://localhost:15002", "Spark Connect remote endpoint")
-	sparkUIUrl := flag.String("spark-ui-url", "http://localhost:4040", "Base URL for the Spark Web UI")
+	defaultSparkUI := "http://localhost:4141"
+	if envUI := os.Getenv("SPARK_UI_URL"); envUI != "" {
+		defaultSparkUI = envUI
+	}
+	sparkUIUrl := flag.String("spark-ui-url", defaultSparkUI, "Base URL for the Spark Web UI")
 	sparkHistoryUrl := flag.String("spark-history-url", "http://localhost:18088", "Base URL for the Spark History Server UI")
 	sparkToken := flag.String("spark-token", "", "Pre-shared authentication token for Spark Connect")
 	grpcKeepaliveTime := flag.Duration("grpc-keepalive-time", 60*time.Second, "gRPC keepalive ping time")
