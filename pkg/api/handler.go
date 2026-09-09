@@ -12,24 +12,32 @@ import (
 )
 
 // ClientCreator defines the function signature for creating a session's Spark Connect client.
-type ClientCreator func(name string, kind string, conf map[string]string, jars []string, proxyUser string) (session.SparkClient, error)
+type ClientCreator func(params session.SessionCreateParams) (session.SparkClient, error)
 
 type Handler struct {
-	manager       *session.Manager
-	createClient  ClientCreator
+	manager         *session.Manager
+	createClient    ClientCreator
+	sparkUIUrl      string
+	sparkHistoryUrl string
 }
 
 // NewHandler creates a new REST API Handler.
-func NewHandler(manager *session.Manager, createClient ClientCreator) *Handler {
+func NewHandler(manager *session.Manager, createClient ClientCreator, sparkUIUrl string, sparkHistoryUrl string) *Handler {
 	return &Handler{
-		manager:      manager,
-		createClient: createClient,
+		manager:         manager,
+		createClient:    createClient,
+		sparkUIUrl:      sparkUIUrl,
+		sparkHistoryUrl: sparkHistoryUrl,
 	}
 }
 
 type CreateSessionRequest struct {
 	Kind      string            `json:"kind"`
 	ProxyUser string            `json:"proxyUser"`
+	UserID    string            `json:"userId"`
+	SessionID string            `json:"sessionId"`
+	UserAgent string            `json:"userAgent"`
+	Token     string            `json:"token"`
 	Name      string            `json:"name"`
 	Conf      map[string]string `json:"conf"`
 	Jars      []string          `json:"jars"`
@@ -44,7 +52,8 @@ type SessionsResponse struct {
 }
 
 type CreateStatementRequest struct {
-	Code string `json:"code"`
+	Code string   `json:"code"`
+	Tags []string `json:"tags,omitempty"`
 }
 
 type StatementsResponse struct {
@@ -94,23 +103,43 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		req.Kind = "spark"
 	}
 
-	client, err := h.createClient(req.Name, req.Kind, req.Conf, req.Jars, req.ProxyUser)
+	userId := req.UserID
+	if userId == "" {
+		userId = req.ProxyUser
+	}
+	userAgent := req.UserAgent
+	if userAgent == "" {
+		userAgent = "livy-next"
+	}
+
+	params := session.SessionCreateParams{
+		Name:      req.Name,
+		Kind:      req.Kind,
+		ProxyUser: req.ProxyUser,
+		UserID:    userId,
+		SessionID: req.SessionID,
+		UserAgent: userAgent,
+		Token:     req.Token,
+		Conf:      req.Conf,
+		Jars:      req.Jars,
+	}
+
+	client, err := h.createClient(params)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "Failed to connect to Spark Connect server: "+err.Error())
 		return
 	}
 
-	sess := h.manager.CreateSession(req.Name, req.Kind, client)
-	sess.ProxyUser = req.ProxyUser
-	// Mark starting as idle immediately or wait for first connection check
+	sess := h.manager.CreateSession(params, client)
 	sess.SetState(session.SessionIdle)
 
 	// Fetch Spark application ID from the remote Connect server
 	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
 	defer cancel()
-	if appId, err := client.GetAppID(ctx); err == nil {
-		sess.SetAppInfo(appId, "http://localhost:18088/history/"+appId)
-	}
+	appId, _ := client.GetAppID(ctx)
+
+	// Populate AppInfo with sparkAppId, live Spark UI link, Spark Connect UI link, and history link
+	sess.SetAppInfo(appId, h.sparkUIUrl, h.sparkHistoryUrl)
 
 	respondJSON(w, http.StatusCreated, sess)
 }
@@ -209,7 +238,7 @@ func (h *Handler) SubmitStatement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt := sess.SubmitStatement(req.Code)
+	stmt := sess.SubmitStatement(req.Code, req.Tags...)
 	respondJSON(w, http.StatusCreated, stmt)
 }
 
@@ -220,6 +249,8 @@ func (h *Handler) SubmitStatement(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Session ID"
+// @Param from query int false "Offset for pagination"
+// @Param size query int false "Number of statements to return"
 // @Success 200 {object} StatementsResponse
 // @Failure 400 {object} map[string]string "Invalid session ID"
 // @Failure 404 {object} map[string]string "Session not found"
@@ -237,9 +268,22 @@ func (h *Handler) ListStatements(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmts := sess.GetStatements()
+	from := 0
+	if fStr := r.URL.Query().Get("from"); fStr != "" {
+		if f, err := strconv.Atoi(fStr); err == nil && f >= 0 {
+			from = f
+		}
+	}
+	size := 0
+	if sStr := r.URL.Query().Get("size"); sStr != "" {
+		if s, err := strconv.Atoi(sStr); err == nil && s > 0 {
+			size = s
+		}
+	}
+
+	stmts, total := sess.GetStatements(from, size)
 	resp := StatementsResponse{
-		TotalStatements: len(stmts),
+		TotalStatements: total,
 		Statements:      stmts,
 	}
 	respondJSON(w, http.StatusOK, resp)
@@ -247,12 +291,14 @@ func (h *Handler) ListStatements(w http.ResponseWriter, r *http.Request) {
 
 // GetStatement godoc
 // @Summary Get statement details
-// @Description Get execution state and results of a statement
+// @Description Get execution state and results of a statement with optional row pagination
 // @Tags statements
 // @Accept json
 // @Produce json
 // @Param id path int true "Session ID"
 // @Param statementId path int true "Statement ID"
+// @Param from query int false "Result row offset"
+// @Param size query int false "Maximum number of rows to return"
 // @Success 200 {object} session.Statement
 // @Failure 400 {object} map[string]string "Invalid session/statement ID"
 // @Failure 404 {object} map[string]string "Session/Statement not found"
@@ -276,7 +322,20 @@ func (h *Handler) GetStatement(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, exists := sess.GetStatement(stmtID)
+	from := 0
+	if fStr := r.URL.Query().Get("from"); fStr != "" {
+		if f, err := strconv.Atoi(fStr); err == nil && f >= 0 {
+			from = f
+		}
+	}
+	size := 0
+	if sStr := r.URL.Query().Get("size"); sStr != "" {
+		if s, err := strconv.Atoi(sStr); err == nil && s > 0 {
+			size = s
+		}
+	}
+
+	stmt, exists := sess.GetStatement(stmtID, from, size)
 	if !exists {
 		respondError(w, http.StatusNotFound, "Statement not found")
 		return

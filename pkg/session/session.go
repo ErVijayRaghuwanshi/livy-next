@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -39,10 +40,27 @@ type SparkClient interface {
 	Close() error
 }
 
-// QueryResult represents the parsed results of a Spark SQL statement.
+// SessionCreateParams specifies configuration and identity parameters for creating a new session.
+type SessionCreateParams struct {
+	Name          string            `json:"name"`
+	Kind          string            `json:"kind"`
+	ProxyUser     string            `json:"proxyUser"`
+	UserID        string            `json:"userId"`
+	SessionID     string            `json:"sessionId"`
+	UserAgent     string            `json:"userAgent"`
+	Token         string            `json:"token"`
+	Conf          map[string]string `json:"conf"`
+	Jars          []string          `json:"jars"`
+	MaxResultRows int               `json:"maxResultRows"`
+}
+
+// QueryResult represents the parsed results of a Spark SQL statement with optional pagination.
 type QueryResult struct {
 	Schema interface{}     `json:"schema"`
 	Data   [][]interface{} `json:"data"`
+	Total  int             `json:"total,omitempty"`
+	From   int             `json:"from,omitempty"`
+	Size   int             `json:"size,omitempty"`
 }
 
 // SchemaField represents a single field inside a Spark Schema struct.
@@ -78,6 +96,9 @@ type Statement struct {
 	Progress  float64          `json:"progress"`
 	Started   int64            `json:"started,omitempty"`   // Milliseconds epoch
 	Completed int64            `json:"completed,omitempty"` // Milliseconds epoch
+	Tags      []string         `json:"tags,omitempty"`
+
+	cancelFunc context.CancelFunc `json:"-"`
 }
 
 // Session represents an interactive Livy session.
@@ -86,6 +107,8 @@ type Session struct {
 	Name         string            `json:"name,omitempty"`
 	AppID        string            `json:"appId,omitempty"`
 	SessionID    string            `json:"sessionId,omitempty"`
+	UserID       string            `json:"userId,omitempty"`
+	UserAgent    string            `json:"userAgent,omitempty"`
 	Owner        string            `json:"owner,omitempty"`
 	ProxyUser    string            `json:"proxyUser,omitempty"`
 	State        SessionState      `json:"state"`
@@ -101,17 +124,32 @@ type Session struct {
 }
 
 // NewSession creates and initializes a new Session.
-func NewSession(id int, name string, kind string, client SparkClient) *Session {
-	var sessionId string
-	if client != nil {
+func NewSession(id int, params SessionCreateParams, client SparkClient) *Session {
+	sessionId := params.SessionID
+	if sessionId == "" && client != nil {
 		sessionId = client.GetSessionID()
+	}
+	userId := params.UserID
+	if userId == "" {
+		userId = params.ProxyUser
+	}
+	userAgent := params.UserAgent
+	if userAgent == "" {
+		userAgent = "livy-next"
+	}
+	kind := params.Kind
+	if kind == "" {
+		kind = "spark"
 	}
 	return &Session{
 		ID:           id,
-		Name:         name,
+		Name:         params.Name,
 		State:        SessionStarting,
 		Kind:         kind,
 		SessionID:    sessionId,
+		UserID:       userId,
+		UserAgent:    userAgent,
+		ProxyUser:    params.ProxyUser,
 		AppInfo:      make(map[string]string),
 		Log:          []string{"Session created"},
 		Statements:   make([]*Statement, 0),
@@ -171,7 +209,7 @@ func (s *Session) Close() error {
 }
 
 // SubmitStatement submits a SQL query/statement to be executed in the session.
-func (s *Session) SubmitStatement(code string) *Statement {
+func (s *Session) SubmitStatement(code string, tags ...string) *Statement {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -182,6 +220,7 @@ func (s *Session) SubmitStatement(code string) *Statement {
 		State:    StatementWaiting,
 		Progress: 0.0,
 		Started:  time.Now().UnixNano() / int64(time.Millisecond),
+		Tags:     tags,
 	}
 	s.Statements = append(s.Statements, stmt)
 	s.State = SessionBusy
@@ -194,13 +233,18 @@ func (s *Session) SubmitStatement(code string) *Statement {
 }
 
 func (s *Session) runStatement(stmt *Statement) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	s.mu.Lock()
+	if stmt.State == StatementCancelled {
+		s.mu.Unlock()
+		return
+	}
+	stmt.cancelFunc = cancel
 	stmt.State = StatementRunning
 	stmt.Progress = 0.1
 	s.mu.Unlock()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	// Listen for session close
 	go func() {
@@ -218,6 +262,12 @@ func (s *Session) runStatement(stmt *Statement) {
 
 	stmt.Completed = time.Now().UnixNano() / int64(time.Millisecond)
 	stmt.Progress = 1.0
+
+	// If cancelled by user while executing, keep cancelled state
+	if stmt.State == StatementCancelled {
+		s.updateBusyStateLocked()
+		return
+	}
 
 	if err != nil {
 		stmt.State = StatementError
@@ -246,7 +296,11 @@ func (s *Session) runStatement(stmt *Statement) {
 		s.Log = append(s.Log, "Statement executed successfully")
 	}
 
-	// Update session state back to idle if there are no other statements running
+	s.updateBusyStateLocked()
+	s.LastActivity = time.Now()
+}
+
+func (s *Session) updateBusyStateLocked() {
 	allDone := true
 	for _, st := range s.Statements {
 		if st.State == StatementWaiting || st.State == StatementRunning {
@@ -257,47 +311,146 @@ func (s *Session) runStatement(stmt *Statement) {
 	if allDone && s.State == SessionBusy {
 		s.State = SessionIdle
 	}
-	s.LastActivity = time.Now()
 }
 
-// GetStatement retrieves a specific statement by ID. If the statement is in a terminal state
-// (available, error, or cancelled), we return a copy containing the output and clear the
-// output in session storage to avoid keeping results in memory.
-func (s *Session) GetStatement(id int) (*Statement, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// GetStatement retrieves a specific statement by ID with optional pagination (from, size).
+// Results are preserved in session memory for subsequent reads and pagination.
+func (s *Session) GetStatement(id int, from int, size int) (*Statement, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	if id < 0 || id >= len(s.Statements) {
 		return nil, false
 	}
 	stmt := s.Statements[id]
-	if stmt.State == StatementAvailable || stmt.State == StatementError || stmt.State == StatementCancelled {
-		if stmt.Output != nil {
-			// Copy the statement to return with the output
-			stmtCopy := &Statement{
-				ID:        stmt.ID,
-				Code:      stmt.Code,
-				State:     stmt.State,
-				Output:    stmt.Output,
-				Progress:  stmt.Progress,
-				Started:   stmt.Started,
-				Completed: stmt.Completed,
-			}
-			// Discard the output from session storage to free resources
-			stmt.Output = nil
-			return stmtCopy, true
+
+	stmtCopy := &Statement{
+		ID:        stmt.ID,
+		Code:      stmt.Code,
+		State:     stmt.State,
+		Progress:  stmt.Progress,
+		Started:   stmt.Started,
+		Completed: stmt.Completed,
+		Tags:      stmt.Tags,
+	}
+
+	if stmt.Output != nil {
+		stmtCopy.Output = paginateOutput(stmt.Output, from, size)
+	}
+
+	return stmtCopy, true
+}
+
+func paginateOutput(out *StatementOutput, from int, size int) *StatementOutput {
+	if out == nil {
+		return nil
+	}
+	copyOut := &StatementOutput{
+		Status:         out.Status,
+		ExecutionCount: out.ExecutionCount,
+		Ename:          out.Ename,
+		Evalue:         out.Evalue,
+		Traceback:      out.Traceback,
+		Data:           make(map[string]interface{}),
+	}
+	for k, v := range out.Data {
+		copyOut.Data[k] = v
+	}
+
+	if from <= 0 && size <= 0 {
+		return copyOut
+	}
+
+	rawJSON, exists := copyOut.Data["application/json"]
+	if !exists || rawJSON == nil {
+		return copyOut
+	}
+
+	var qr *QueryResult
+	switch val := rawJSON.(type) {
+	case *QueryResult:
+		qr = val
+	case QueryResult:
+		qr = &val
+	}
+
+	if qr == nil {
+		return copyOut
+	}
+
+	total := len(qr.Data)
+	start := from
+	if start < 0 {
+		start = 0
+	}
+	if start > total {
+		start = total
+	}
+
+	end := total
+	if size > 0 {
+		end = start + size
+		if end > total {
+			end = total
 		}
 	}
-	return stmt, true
+
+	slicedData := qr.Data[start:end]
+	copyOut.Data["application/json"] = &QueryResult{
+		Schema: qr.Schema,
+		Data:   slicedData,
+		Total:  total,
+		From:   start,
+		Size:   len(slicedData),
+	}
+
+	return copyOut
 }
 
-// GetStatements retrieves all statements.
-func (s *Session) GetStatements() []*Statement {
+// GetStatements retrieves statements with optional pagination (from, size).
+func (s *Session) GetStatements(from int, size int) ([]*Statement, int) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.Statements
+
+	total := len(s.Statements)
+	if total == 0 {
+		return []*Statement{}, 0
+	}
+
+	start := from
+	if start < 0 {
+		start = 0
+	}
+	if start > total {
+		start = total
+	}
+
+	end := total
+	if size > 0 {
+		end = start + size
+		if end > total {
+			end = total
+		}
+	}
+
+	stmts := s.Statements[start:end]
+	res := make([]*Statement, len(stmts))
+	for i, st := range stmts {
+		res[i] = &Statement{
+			ID:        st.ID,
+			Code:      st.Code,
+			State:     st.State,
+			Progress:  st.Progress,
+			Started:   st.Started,
+			Completed: st.Completed,
+			Tags:      st.Tags,
+			Output:    st.Output,
+		}
+	}
+	return res, total
 }
 
-// CancelStatement cancels a statement if it's waiting or running.
+// CancelStatement cancels a statement if it's waiting or running, immediately signalling the cancellation context.
 func (s *Session) CancelStatement(id int) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -308,6 +461,9 @@ func (s *Session) CancelStatement(id int) bool {
 	stmt := s.Statements[id]
 	if stmt.State == StatementWaiting || stmt.State == StatementRunning {
 		stmt.State = StatementCancelled
+		if stmt.cancelFunc != nil {
+			stmt.cancelFunc()
+		}
 		stmt.Output = &StatementOutput{
 			Status:         "error",
 			ExecutionCount: stmt.ID,
@@ -316,18 +472,34 @@ func (s *Session) CancelStatement(id int) bool {
 			Traceback:      []string{"Cancelled"},
 		}
 		s.Log = append(s.Log, "Statement execution cancelled by user")
+		s.updateBusyStateLocked()
 		return true
 	}
 	return false
 }
 
-// SetAppInfo updates the session's Application ID and metadata in a thread-safe manner.
-func (s *Session) SetAppInfo(appID string, uiURL string) {
+// SetAppInfo updates the session's Application ID, Spark UI URLs, and Connect UI URLs in a thread-safe manner.
+func (s *Session) SetAppInfo(appID string, sparkUI string, sparkHistory string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.AppID = appID
 	if s.AppInfo == nil {
 		s.AppInfo = make(map[string]string)
 	}
-	s.AppInfo["sparkUiUrl"] = uiURL
+	if appID != "" {
+		s.AppInfo["sparkAppId"] = appID
+	}
+	if sparkUI != "" {
+		sparkUI = strings.TrimRight(sparkUI, "/")
+		s.AppInfo["sparkUiUrl"] = sparkUI
+		if s.SessionID != "" {
+			s.AppInfo["sparkConnectUiUrl"] = fmt.Sprintf("%s/connect/session/?id=%s", sparkUI, s.SessionID)
+		} else {
+			s.AppInfo["sparkConnectUiUrl"] = fmt.Sprintf("%s/connect/", sparkUI)
+		}
+	}
+	if sparkHistory != "" && appID != "" {
+		sparkHistory = strings.TrimRight(sparkHistory, "/")
+		s.AppInfo["sparkHistoryUrl"] = fmt.Sprintf("%s/history/%s", sparkHistory, appID)
+	}
 }

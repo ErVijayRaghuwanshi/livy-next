@@ -687,8 +687,20 @@
                     <input type="text" class="form-control" id="session-name" placeholder="e.g. my-analysis-session">
                 </div>
                 <div class="form-group">
+                    <label class="form-label">User ID (Optional)</label>
+                    <input type="text" class="form-control" id="user-id" placeholder="e.g. ervijay">
+                </div>
+                <div class="form-group">
                     <label class="form-label">Proxy User (Optional)</label>
                     <input type="text" class="form-control" id="proxy-user" placeholder="e.g. spark_admin">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Spark Connect Session ID (Optional UUID)</label>
+                    <input type="text" class="form-control" id="session-id" placeholder="Leave empty for auto-generated UUIDv4">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">User Agent (Optional)</label>
+                    <input type="text" class="form-control" id="user-agent" placeholder="e.g. jupyter, airflow (default: livy-next)">
                 </div>
             </div>
             <div class="modal-footer">
@@ -816,6 +828,9 @@
                         <div class="session-meta">
                             <div class="session-meta-item">
                                 <span>Kind:</span> <span>${s.kind}</span>
+                            </div>
+                            <div class="session-meta-item">
+                                <span>User:</span> <span style="font-size:0.75rem; color: #a5b4fc;">${escapeHtml(s.userId || s.proxyUser || 'N/A')}</span>
                             </div>
                             <div class="session-meta-item">
                                 <span>Session ID:</span> <span style="font-family: monospace; font-size:0.75rem;">${s.sessionId || 'N/A'}</span>
@@ -948,16 +963,25 @@
             const sparkUiBtn = document.getElementById('detail-spark-ui-btn');
             if (sparkUiBtn) {
                 const uiUrl = sess.appInfo && sess.appInfo.sparkUiUrl;
+                const connectUrl = sess.appInfo && sess.appInfo.sparkConnectUiUrl;
+                let btnsHtml = '';
+                if (connectUrl) {
+                    btnsHtml += `
+                        <a href="${connectUrl}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.15);" target="_blank" title="Open Spark Connect Session in Spark UI">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Connect UI
+                        </a>
+                    `;
+                }
                 if (uiUrl) {
-                    sparkUiBtn.innerHTML = `
+                    btnsHtml += `
                         <a href="${uiUrl}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" target="_blank">
                             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                             Spark UI
                         </a>
                     `;
-                } else {
-                    sparkUiBtn.innerHTML = '';
                 }
+                sparkUiBtn.innerHTML = btnsHtml;
             }
 
             const logsContainer = document.getElementById('logs-container');
@@ -1213,14 +1237,23 @@
         async function submitCreateSession() {
             const kind = document.getElementById('session-kind').value;
             const name = document.getElementById('session-name').value.trim();
+            const userId = document.getElementById('user-id').value.trim();
             const proxyUser = document.getElementById('proxy-user').value.trim();
+            const sessionId = document.getElementById('session-id').value.trim();
+            const userAgent = document.getElementById('user-agent').value.trim();
 
             closeNewSessionModal();
             try {
+                const payload = { kind, name };
+                if (userId) payload.userId = userId;
+                if (proxyUser) payload.proxyUser = proxyUser;
+                if (sessionId) payload.sessionId = sessionId;
+                if (userAgent) payload.userAgent = userAgent;
+
                 const res = await fetch('/sessions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ kind, name, proxyUser })
+                    body: JSON.stringify(payload)
                 });
 
                 if (res.ok) {

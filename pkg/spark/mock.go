@@ -7,7 +7,8 @@ import (
 
 // MockClient implements session.SparkClient for testing/mock mode.
 type MockClient struct {
-	AppName string
+	AppName   string
+	SessionID string
 }
 
 func (m *MockClient) ExecuteSQL(ctx context.Context, sql string) (*session.QueryResult, error) {
@@ -37,6 +38,9 @@ func (m *MockClient) GetAppID(ctx context.Context) (string, error) {
 }
 
 func (m *MockClient) GetSessionID() string {
+	if m.SessionID != "" {
+		return m.SessionID
+	}
 	if m.AppName != "" {
 		return "mock-session-id-" + m.AppName
 	}

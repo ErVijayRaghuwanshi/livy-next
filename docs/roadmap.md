@@ -42,10 +42,12 @@ gantt
 
 ---
 
-### Phase 2: Spark Connect Parity & Session Isolation (Short-term)
-- **Active Cancel Forwarding**: Integrate cancellations directly into Spark Connect (via Spark Connect's `Interrupt` operation) so that cancelling a statement in `livy-next` also interrupts execution on the remote Spark cluster.
-- **Dynamic Configuration Overrides**: Support passing specific cluster configs and custom jar packages in the `POST /sessions` payload, constructing custom remote session connections per client request.
-- **Proxy-User / Impersonation Isolation**: Enable secure multi-tenant deployments by supporting remote user impersonation during gRPC channel creation, isolating users within the Spark cluster namespace.
+### Phase 2: Spark Connect Parity & Session Isolation (Completed)
+- [x] **Active Cancel Forwarding**: Forward statement cancellations directly via context cancellation to terminate active execution on remote Spark Connect server.
+- [x] **Dynamic Configuration Overrides**: Support passing specific cluster configs and custom jar packages in `POST /sessions`, applying configurations dynamically.
+- [x] **Proxy-User / Multi-tenant Identity Isolation**: Full decoupling of `user_id`, `session_id` (UUID), `user_agent`, and authentication tokens (`token`), mapping directly to Spark Connect remote connection specifications.
+- [x] **Result Pagination & Persistence**: Support standard Livy `from` and `size` parameters on statements, preserving query outputs across multiple reads and preventing premature data purging.
+- [x] **Dedicated Spark Connect UI Deep-linking**: Live links in session metadata and web dashboard to `/connect/session/?id=<sessionId>`.
 
 ---
 

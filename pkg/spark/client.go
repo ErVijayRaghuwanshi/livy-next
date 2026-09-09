@@ -19,14 +19,19 @@ import (
 
 type Client struct {
 	session sql.SparkSession
+	maxRows int
 }
 
-func NewClient(ctx context.Context, remote string, appName string) (*Client, error) {
+func NewClient(ctx context.Context, remote string, appName string, maxRows ...int) (*Client, error) {
+	limit := 10000
+	if len(maxRows) > 0 && maxRows[0] > 0 {
+		limit = maxRows[0]
+	}
 	sparkSession, err := sql.NewSessionBuilder().Remote(remote).Build(ctx)
 	if err != nil {
 		return nil, err
 	}
-	c := &Client{session: sparkSession}
+	c := &Client{session: sparkSession, maxRows: limit}
 	if appName != "" {
 		_ = c.SetConfig(ctx, "spark.app.name", appName)
 	}
@@ -39,8 +44,10 @@ func (c *Client) ExecuteSQL(ctx context.Context, sqlQuery string) (*session.Quer
 		return nil, err
 	}
 
-	// Limit execution results to a maximum of 10,000 rows to prevent OOM crashes
-	df = df.Limit(ctx, 10000)
+	// Limit execution results to prevent OOM crashes (configurable via maxRows)
+	if c.maxRows > 0 {
+		df = df.Limit(ctx, int32(c.maxRows))
+	}
 
 	tblPtr, err := df.ToArrow(ctx)
 	if err != nil {

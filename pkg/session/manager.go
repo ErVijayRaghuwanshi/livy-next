@@ -34,14 +34,14 @@ func NewManager(idleTimeout time.Duration, deadTimeout time.Duration) *Manager {
 }
 
 // CreateSession allocates a new session ID and registers the session.
-func (m *Manager) CreateSession(name string, kind string, client SparkClient) *Session {
+func (m *Manager) CreateSession(params SessionCreateParams, client SparkClient) *Session {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	id := m.nextID
 	m.nextID++
 
-	sess := NewSession(id, name, kind, client)
+	sess := NewSession(id, params, client)
 	m.sessions[id] = sess
 	return sess
 }

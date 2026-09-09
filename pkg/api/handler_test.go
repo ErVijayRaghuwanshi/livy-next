@@ -85,15 +85,15 @@ func TestLivyAPI(t *testing.T) {
 		},
 	}
 
-	creator := func(name string, kind string, conf map[string]string, jars []string, proxyUser string) (session.SparkClient, error) {
+	creator := func(params session.SessionCreateParams) (session.SparkClient, error) {
 		return mockClient, nil
 	}
 
-	handler := api.NewHandler(manager, creator)
+	handler := api.NewHandler(manager, creator, "http://localhost:4040", "http://localhost:18088")
 	router := api.SetupRouter(handler, []string{"http://example.com"})
 
-	// 1. Create a Session & Verify CORS
-	body := []byte(`{"kind": "spark"}`)
+	// 1. Create a Session with identity parameters & Verify CORS
+	body := []byte(`{"kind": "spark", "userId": "ervijay", "sessionId": "550e8400-e29b-41d4-a716-446655440000", "userAgent": "test-client"}`)
 	req, _ := http.NewRequest("POST", "/sessions", bytes.NewBuffer(body))
 	req.Header.Set("Origin", "http://example.com")
 	rr := httptest.NewRecorder()
@@ -106,6 +106,10 @@ func TestLivyAPI(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, createdSession.ID)
 	assert.Equal(t, session.SessionIdle, createdSession.State)
+	assert.Equal(t, "ervijay", createdSession.UserID)
+	assert.Equal(t, "550e8400-e29b-41d4-a716-446655440000", createdSession.SessionID)
+	assert.Equal(t, "test-client", createdSession.UserAgent)
+	assert.Equal(t, "http://localhost:4040/connect/session/?id=550e8400-e29b-41d4-a716-446655440000", createdSession.AppInfo["sparkConnectUiUrl"])
 
 	// 2. List Sessions
 	req, _ = http.NewRequest("GET", "/sessions", nil)
@@ -121,8 +125,8 @@ func TestLivyAPI(t *testing.T) {
 	assert.Equal(t, int64(300000), listResp.DeadTimeout)
 	assert.Equal(t, 0, listResp.Sessions[0].ID)
 
-	// 3. Submit a Statement
-	stmtBody := []byte(`{"code": "SELECT * FROM test"}`)
+	// 3. Submit a Statement with Tags
+	stmtBody := []byte(`{"code": "SELECT * FROM test", "tags": ["project:test", "notebook:demo"]}`)
 	req, _ = http.NewRequest("POST", "/sessions/0/statements", bytes.NewBuffer(stmtBody))
 	rr = httptest.NewRecorder()
 	router.ServeHTTP(rr, req)
@@ -133,6 +137,7 @@ func TestLivyAPI(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, stmt.ID)
 	assert.Equal(t, "SELECT * FROM test", stmt.Code)
+	assert.Equal(t, []string{"project:test", "notebook:demo"}, stmt.Tags)
 
 	// Wait for execution to finish
 	time.Sleep(100 * time.Millisecond)
@@ -149,6 +154,29 @@ func TestLivyAPI(t *testing.T) {
 	assert.Equal(t, session.StatementAvailable, stmtStatus.State)
 	assert.NotNil(t, stmtStatus.Output)
 	assert.Equal(t, "ok", stmtStatus.Output.Status)
+
+	// 4b. Re-fetch the Statement to verify Output was NOT discarded on first fetch!
+	req, _ = http.NewRequest("GET", "/sessions/0/statements/0", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var stmtStatus2 session.Statement
+	err = json.Unmarshal(rr.Body.Bytes(), &stmtStatus2)
+	assert.NoError(t, err)
+	assert.NotNil(t, stmtStatus2.Output, "Output must be preserved across multiple polls")
+
+	// 4c. Fetch with pagination ?from=0&size=1
+	req, _ = http.NewRequest("GET", "/sessions/0/statements/0?from=0&size=1", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var pagedStmt session.Statement
+	err = json.Unmarshal(rr.Body.Bytes(), &pagedStmt)
+	assert.NoError(t, err)
+	assert.NotNil(t, pagedStmt.Output)
+	assert.Equal(t, "ok", pagedStmt.Output.Status)
 
 	// 5. Submit a Statement that Fails
 	failBody := []byte(`{"code": "FAIL"}`)
