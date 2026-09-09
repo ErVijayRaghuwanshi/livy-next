@@ -313,8 +313,14 @@ func (s *Session) runStatement(stmt *Statement) {
 		}
 		s.Log = append(s.Log, "Statement execution failed: "+err.Error())
 
-		// If the Spark session was closed on the server side, automatically terminate this session locally
-		if strings.Contains(err.Error(), "SESSION_CLOSED") || strings.Contains(err.Error(), "INVALID_HANDLE") {
+		// If the Spark session was closed on the server side or connection was severed, automatically terminate this session locally
+		errStr := err.Error()
+		if strings.Contains(errStr, "SESSION_CLOSED") ||
+			strings.Contains(errStr, "INVALID_HANDLE") ||
+			strings.Contains(errStr, "Unavailable") ||
+			strings.Contains(errStr, "transport is closing") ||
+			strings.Contains(errStr, "connection reset by peer") ||
+			strings.Contains(errStr, "TransientFailure") {
 			go s.Close()
 		}
 	} else {

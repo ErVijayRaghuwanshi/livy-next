@@ -20,7 +20,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"livy-next/pkg/api"
@@ -166,14 +168,33 @@ func main() {
 	handler := api.NewHandler(manager, creator, *sparkUIUrl, *sparkHistoryUrl)
 	router := api.SetupRouter(handler, origins)
 
-	// 4. Start HTTP Server
+	// 4. Start HTTP Server with Graceful Shutdown
 	server := &http.Server{
 		Addr:    *addr,
 		Handler: router,
 	}
 
-	log.Printf("Server listening on %s", *addr)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Server failed: %v", err)
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
+	go func() {
+		log.Printf("Server listening on %s", *addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	sig := <-sigCh
+	log.Printf("Received shutdown signal %s, initiating graceful shutdown...", sig)
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("HTTP server shutdown warning: %v", err)
 	}
+
+	log.Printf("Closing all active Spark Connect sessions...")
+	manager.CloseAll()
+	log.Printf("Livy-Next stopped gracefully.")
 }
