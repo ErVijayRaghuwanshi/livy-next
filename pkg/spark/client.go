@@ -90,6 +90,28 @@ func (c *Client) GetMaintenanceInterval(ctx context.Context) (time.Duration, err
 	return ParseSparkDuration(val)
 }
 
+// GetSparkVersion queries Spark Connect for its exact runtime version string (e.g. "4.2.0").
+func (c *Client) GetSparkVersion(ctx context.Context) (string, error) {
+	qr, err := c.ExecuteSQL(ctx, "SELECT version()")
+	if err != nil {
+		return "", err
+	}
+	if len(qr.Data) > 0 && len(qr.Data[0]) > 0 {
+		raw := strings.TrimSpace(fmt.Sprintf("%v", qr.Data[0][0]))
+		parts := strings.Split(raw, " ")
+		if len(parts) > 0 && parts[0] != "" {
+			return parts[0], nil
+		}
+		return raw, nil
+	}
+	return "", fmt.Errorf("empty version response from spark connect")
+}
+
+// GetMaster queries Spark Connect for the Spark Master cluster endpoint.
+func (c *Client) GetMaster(ctx context.Context) (string, error) {
+	return c.session.Config().Get(ctx, "spark.master")
+}
+
 var dayRegex = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)d$`)
 
 // ParseSparkDuration parses duration strings accepted by Apache Spark.

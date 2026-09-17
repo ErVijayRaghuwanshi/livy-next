@@ -390,6 +390,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/version": {
+            "get": {
+                "description": "Get Livy-Next version, Apache Spark Connect version, and cluster details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Get server and Spark version information",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.VersionResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -519,6 +542,16 @@ const docTemplate = `{
                         "$ref": "#/definitions/session.Session"
                     }
                 },
+                "sparkMaster": {
+                    "description": "SparkMaster is the Spark Master cluster URL reported by Spark Connect",
+                    "type": "string",
+                    "example": "spark://spark-master:7077"
+                },
+                "sparkVersion": {
+                    "description": "SparkVersion is the Apache Spark version reported by Spark Connect",
+                    "type": "string",
+                    "example": "4.2.0"
+                },
                 "total": {
                     "description": "Total is the total number of active sessions",
                     "type": "integer",
@@ -540,6 +573,31 @@ const docTemplate = `{
                     "description": "TotalStatements is the total count of statements in the session",
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "api.VersionResponse": {
+            "type": "object",
+            "properties": {
+                "build": {
+                    "description": "Build is the build identifier",
+                    "type": "string",
+                    "example": "livy-next"
+                },
+                "sparkMaster": {
+                    "description": "SparkMaster is the Spark master cluster URL",
+                    "type": "string",
+                    "example": "spark://spark-master:7077"
+                },
+                "sparkVersion": {
+                    "description": "SparkVersion is the version of Apache Spark running on the Connect server",
+                    "type": "string",
+                    "example": "4.2.0"
+                },
+                "version": {
+                    "description": "Version is the Livy-Next server version",
+                    "type": "string",
+                    "example": "1.0.0"
                 }
             }
         },
@@ -603,6 +661,11 @@ const docTemplate = `{
                     "description": "SessionID is the Spark Connect UUID session identifier",
                     "type": "string",
                     "example": "6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f"
+                },
+                "sparkVersion": {
+                    "description": "SparkVersion is the version of Apache Spark running on the Connect server",
+                    "type": "string",
+                    "example": "4.2.0"
                 },
                 "state": {
                     "description": "State of the session",

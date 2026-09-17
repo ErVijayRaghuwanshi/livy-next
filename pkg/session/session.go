@@ -37,6 +37,8 @@ type SparkClient interface {
 	GetAppID(ctx context.Context) (string, error)
 	GetSessionID() string
 	GetSessionTimeout(ctx context.Context) (time.Duration, error)
+	GetSparkVersion(ctx context.Context) (string, error)
+	GetMaster(ctx context.Context) (string, error)
 	SetConfig(ctx context.Context, key string, value string) error
 	Close() error
 }
@@ -153,6 +155,8 @@ type Session struct {
 	LastActivity time.Time         `json:"lastActivity"`
 	// IdleTimeout is the session-specific idle timeout threshold in milliseconds (0 if using manager default)
 	IdleTimeout  int64             `json:"idleTimeout,omitempty" example:"7200000"`
+	// SparkVersion is the version of Apache Spark running on the Connect server
+	SparkVersion string            `json:"sparkVersion,omitempty" example:"4.2.0"`
 
 	idleTimeoutDuration time.Duration
 	client              SparkClient

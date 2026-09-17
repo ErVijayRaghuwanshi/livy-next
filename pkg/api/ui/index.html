@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livy-Next — Apache Spark 4.x Connect Dashboard</title>
+    <title>Livy-Next — Apache Spark Connect Dashboard</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1040,9 +1040,9 @@
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span class="brand-title">LIVY-NEXT</span>
-                    <span class="badge-spark4">
+                    <span class="badge-spark4" id="header-spark-badge" title="Live Apache Spark Connect Server">
                         <span class="status-dot-pulse"></span>
-                        Spark 4.x Connect
+                        <span id="header-spark-version">Spark Connect</span>
                     </span>
                 </div>
             </div>
@@ -1219,10 +1219,29 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            fetchClusterVersion();
             loadSessions();
             setInterval(loadSessions, 8000); // 8s poll
             setInterval(updateTimeoutBars, 1000); // 1s countdown refresh
         });
+
+        async function fetchClusterVersion() {
+            try {
+                const res = await fetch('/version');
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.sparkVersion) clusterSparkVersion = data.sparkVersion;
+                if (data.sparkMaster) clusterSparkMaster = data.sparkMaster;
+                const headerVerEl = document.getElementById('header-spark-version');
+                if (headerVerEl && clusterSparkVersion) {
+                    headerVerEl.innerText = `Spark ${clusterSparkVersion} Connect`;
+                }
+                const headerBadge = document.getElementById('header-spark-badge');
+                if (headerBadge && clusterSparkMaster) {
+                    headerBadge.title = `Connected to Spark Master: ${clusterSparkMaster}`;
+                }
+            } catch (e) {}
+        }
 
         function showToast(msg) {
             const toast = document.getElementById('toast-notification');
@@ -1282,12 +1301,28 @@
             }
         }
 
+        let clusterSparkVersion = '';
+        let clusterSparkMaster = '';
+
         function updateClusterStats(data) {
             document.getElementById('stat-total-sessions').innerText = data.total || 0;
             const activeCount = allSessions.filter(s => s.state !== 'dead').length;
             const deadCount = allSessions.filter(s => s.state === 'dead').length;
             document.getElementById('stat-active-sessions').innerText = activeCount;
             document.getElementById('stat-dead-sessions').innerText = deadCount;
+
+            clusterSparkVersion = data.sparkVersion || clusterSparkVersion || (allSessions.find(s => s.sparkVersion)?.sparkVersion) || '';
+            clusterSparkMaster = data.sparkMaster || clusterSparkMaster || '';
+
+            const headerVerEl = document.getElementById('header-spark-version');
+            if (headerVerEl) {
+                headerVerEl.innerText = clusterSparkVersion ? `Spark ${clusterSparkVersion} Connect` : 'Spark Connect';
+            }
+
+            const headerBadge = document.getElementById('header-spark-badge');
+            if (headerBadge && clusterSparkMaster) {
+                headerBadge.title = `Connected to Spark Master: ${clusterSparkMaster}`;
+            }
 
             const timeoutMins = Math.round(data.idleTimeout / 60000);
             document.getElementById('stat-server-timeout').innerText = timeoutMins > 0 ? `${timeoutMins}m (Spark Sync)` : 'None';
@@ -1346,6 +1381,10 @@
                             <div class="session-meta-row">
                                 <span class="meta-label">ID / Kind</span>
                                 <span style="font-weight:600; color:white;">#${s.id} &bull; <span style="color:#a855f7;">${s.kind}</span></span>
+                            </div>
+                            <div class="session-meta-row">
+                                <span class="meta-label">Spark Version</span>
+                                <span class="meta-val-badge" style="color:#38bdf8; font-weight:600;">v${escapeHtml(s.sparkVersion || clusterSparkVersion || '4.2.0')}</span>
                             </div>
                             <div class="session-meta-row">
                                 <span class="meta-label">User Identity</span>
@@ -2053,9 +2092,11 @@
                 <div class="config-card">
                     <h4>
                         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        Spark Connect 4.x Runtime
+                        Spark Runtime
                     </h4>
                     <table class="config-table">
+                        <tr><td>Spark Version</td><td><span class="meta-val-badge" style="color:#38bdf8; font-weight:600;">v${escapeHtml(sess.sparkVersion || clusterSparkVersion || '4.2.0')}</span></td></tr>
+                        <tr><td>Spark Master</td><td><code style="color:#e2e8f0;">${escapeHtml(clusterSparkMaster || 'spark://spark-master:7077')}</code></td></tr>
                         <tr><td>Session UUID</td><td style="font-size:0.7rem;">${sess.sessionId || 'N/A'}</td></tr>
                         <tr><td>Spark App ID</td><td>${sess.appId || 'N/A'}</td></tr>
                         <tr><td>Idle Timeout</td><td style="color:#10b981;">${timeoutMins}</td></tr>

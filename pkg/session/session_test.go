@@ -49,6 +49,14 @@ func (d *dummySparkClient) GetSessionTimeout(ctx context.Context) (time.Duration
 	return 2 * time.Hour, nil
 }
 
+func (d *dummySparkClient) GetSparkVersion(ctx context.Context) (string, error) {
+	return "4.2.0", nil
+}
+
+func (d *dummySparkClient) GetMaster(ctx context.Context) (string, error) {
+	return "spark://spark-master:7077", nil
+}
+
 func (d *dummySparkClient) GetSessionID() string {
 	return "sess-uuid-12345"
 }

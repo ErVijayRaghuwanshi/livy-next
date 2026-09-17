@@ -100,6 +100,31 @@ func main() {
 	manager := session.NewManager(*idleTimeout, *deadTimeout)
 	defer manager.CloseAll()
 
+	// 1b. Asynchronously probe Spark Connect server on startup to discover exact version, master, and timeout
+	if !*mockMode {
+		go func() {
+			probeCtx, probeCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer probeCancel()
+			probeClient, err := spark.NewClient(probeCtx, *sparkRemote, "livy-next-startup-probe")
+			if err == nil {
+				defer probeClient.Close()
+				if version, err := probeClient.GetSparkVersion(probeCtx); err == nil && version != "" {
+					master, _ := probeClient.GetMaster(probeCtx)
+					manager.SetSparkInfo(version, master)
+					log.Printf("Connected to Apache Spark %s (Master: %s)", version, master)
+				}
+				if *syncSessionTimeout {
+					if remoteTimeout, err := probeClient.GetSessionTimeout(probeCtx); err == nil && remoteTimeout > 0 {
+						manager.SetIdleTimeout(remoteTimeout)
+						log.Printf("Synchronized Spark Connect session timeout: %v", remoteTimeout)
+					}
+				}
+			} else {
+				log.Printf("Startup probe to %s deferred (%v); will sync on first session creation", *sparkRemote, err)
+			}
+		}()
+	}
+
 	// 2. Define ClientCreator
 	creator := func(params session.SessionCreateParams) (session.SparkClient, error) {
 		name := params.Name

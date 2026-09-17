@@ -21,6 +21,8 @@ type MockSparkClient struct {
 	CloseFunc             func() error
 	GetAppIDFunc          func(ctx context.Context) (string, error)
 	GetSessionTimeoutFunc func(ctx context.Context) (time.Duration, error)
+	GetSparkVersionFunc   func(ctx context.Context) (string, error)
+	GetMasterFunc         func(ctx context.Context) (string, error)
 	SetConfigFunc         func(ctx context.Context, key string, value string) error
 }
 
@@ -46,6 +48,20 @@ func (m *MockSparkClient) GetSessionTimeout(ctx context.Context) (time.Duration,
 		return m.GetSessionTimeoutFunc(ctx)
 	}
 	return 0, nil
+}
+
+func (m *MockSparkClient) GetSparkVersion(ctx context.Context) (string, error) {
+	if m.GetSparkVersionFunc != nil {
+		return m.GetSparkVersionFunc(ctx)
+	}
+	return "4.2.0", nil
+}
+
+func (m *MockSparkClient) GetMaster(ctx context.Context) (string, error) {
+	if m.GetMasterFunc != nil {
+		return m.GetMasterFunc(ctx)
+	}
+	return "spark://spark-master:7077", nil
 }
 
 func (m *MockSparkClient) GetSessionID() string {
@@ -332,4 +348,19 @@ func TestCreateSession_InheritSparkTimeout(t *testing.T) {
 	err = json.Unmarshal(rr.Body.Bytes(), &listResp)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(7200000), listResp.IdleTimeout)
+	assert.Equal(t, "4.2.0", listResp.SparkVersion)
+	assert.Equal(t, "spark://spark-master:7077", listResp.SparkMaster)
+
+	// Verify GET /version
+	req, _ = http.NewRequest("GET", "/version", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var versionResp api.VersionResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &versionResp)
+	assert.NoError(t, err)
+	assert.Equal(t, "1.0.0", versionResp.Version)
+	assert.Equal(t, "4.2.0", versionResp.SparkVersion)
+	assert.Equal(t, "spark://spark-master:7077", versionResp.SparkMaster)
 }

@@ -9,12 +9,14 @@ import (
 
 // Manager handles the lifecycle of all interactive Spark sessions.
 type Manager struct {
-	mu          sync.RWMutex
-	sessions    map[int]*Session
-	nextID      int
-	idleTimeout time.Duration
-	deadTimeout time.Duration
-	stopCh      chan struct{}
+	mu           sync.RWMutex
+	sessions     map[int]*Session
+	nextID       int
+	idleTimeout  time.Duration
+	deadTimeout  time.Duration
+	sparkVersion string
+	sparkMaster  string
+	stopCh       chan struct{}
 }
 
 // NewManager creates a new session Manager.
@@ -102,6 +104,32 @@ func (m *Manager) SetIdleTimeout(d time.Duration) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.idleTimeout = d
+}
+
+// SetSparkInfo updates the connected Spark cluster version and master address.
+func (m *Manager) SetSparkInfo(version string, master string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if version != "" {
+		m.sparkVersion = version
+	}
+	if master != "" {
+		m.sparkMaster = master
+	}
+}
+
+// GetSparkVersion returns the Spark version reported by Spark Connect.
+func (m *Manager) GetSparkVersion() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.sparkVersion
+}
+
+// GetSparkMaster returns the Spark master URL reported by Spark Connect.
+func (m *Manager) GetSparkMaster() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.sparkMaster
 }
 
 // GetDeadTimeout returns the configured dead session retention timeout.

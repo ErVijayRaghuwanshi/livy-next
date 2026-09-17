@@ -83,6 +83,12 @@ type SessionsResponse struct {
 
 	// DeadTimeout is the server dead timeout threshold in milliseconds
 	DeadTimeout int64 `json:"deadTimeout" example:"86400000"`
+
+	// SparkVersion is the Apache Spark version reported by Spark Connect
+	SparkVersion string `json:"sparkVersion,omitempty" example:"4.2.0"`
+
+	// SparkMaster is the Spark Master cluster URL reported by Spark Connect
+	SparkMaster string `json:"sparkMaster,omitempty" example:"spark://spark-master:7077"`
 }
 
 // CreateStatementRequest specifies a SQL statement to execute with optional tracking tags.
@@ -132,11 +138,13 @@ type CancelStatementResponse struct {
 func (h *Handler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	sessions := h.manager.ListSessions()
 	resp := SessionsResponse{
-		From:        0,
-		Total:       len(sessions),
-		Sessions:    sessions,
-		IdleTimeout: int64(h.manager.GetIdleTimeout() / time.Millisecond),
-		DeadTimeout: int64(h.manager.GetDeadTimeout() / time.Millisecond),
+		From:         0,
+		Total:        len(sessions),
+		Sessions:     sessions,
+		IdleTimeout:  int64(h.manager.GetIdleTimeout() / time.Millisecond),
+		DeadTimeout:  int64(h.manager.GetDeadTimeout() / time.Millisecond),
+		SparkVersion: h.manager.GetSparkVersion(),
+		SparkMaster:  h.manager.GetSparkMaster(),
 	}
 	respondJSON(w, http.StatusOK, resp)
 }
@@ -214,7 +222,47 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Fetch exact Spark runtime version and master info
+	if version, err := client.GetSparkVersion(ctx); err == nil && version != "" {
+		sess.SparkVersion = version
+		master, _ := client.GetMaster(ctx)
+		h.manager.SetSparkInfo(version, master)
+	}
+
 	respondJSON(w, http.StatusCreated, sess)
+}
+
+// VersionResponse represents the version and runtime information of the Livy-Next service and Spark cluster.
+type VersionResponse struct {
+	// Version is the Livy-Next server version
+	Version string `json:"version" example:"1.0.0"`
+
+	// SparkVersion is the version of Apache Spark running on the Connect server
+	SparkVersion string `json:"sparkVersion,omitempty" example:"4.2.0"`
+
+	// SparkMaster is the Spark master cluster URL
+	SparkMaster string `json:"sparkMaster,omitempty" example:"spark://spark-master:7077"`
+
+	// Build is the build identifier
+	Build string `json:"build" example:"livy-next"`
+}
+
+// GetVersion godoc
+// @Summary Get server and Spark version information
+// @Description Get Livy-Next version, Apache Spark Connect version, and cluster details
+// @Tags system
+// @Accept json
+// @Produce json
+// @Success 200 {object} VersionResponse
+// @Router /version [get]
+func (h *Handler) GetVersion(w http.ResponseWriter, r *http.Request) {
+	resp := VersionResponse{
+		Version:      "1.0.0",
+		SparkVersion: h.manager.GetSparkVersion(),
+		SparkMaster:  h.manager.GetSparkMaster(),
+		Build:        "livy-next",
+	}
+	respondJSON(w, http.StatusOK, resp)
 }
 
 // GetSession godoc

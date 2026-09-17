@@ -44,6 +44,14 @@ func (m *MockClient) GetSessionTimeout(ctx context.Context) (time.Duration, erro
 	return m.Timeout, nil
 }
 
+func (m *MockClient) GetSparkVersion(ctx context.Context) (string, error) {
+	return "4.2.0-mock", nil
+}
+
+func (m *MockClient) GetMaster(ctx context.Context) (string, error) {
+	return "local[*]", nil
+}
+
 func (m *MockClient) GetSessionID() string {
 	if m.SessionID != "" {
 		return m.SessionID

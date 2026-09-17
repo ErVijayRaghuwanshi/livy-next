@@ -30,6 +30,8 @@ func SetupRouter(h *Handler, allowedOrigins []string) *chi.Mux {
 		w.Write([]byte(uiHTML))
 	})
 
+	r.Get("/version", h.GetVersion)
+
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
 	))

@@ -98,6 +98,15 @@ definitions:
         items:
           $ref: '#/definitions/session.Session'
         type: array
+      sparkMaster:
+        description: SparkMaster is the Spark Master cluster URL reported by Spark
+          Connect
+        example: spark://spark-master:7077
+        type: string
+      sparkVersion:
+        description: SparkVersion is the Apache Spark version reported by Spark Connect
+        example: 4.2.0
+        type: string
       total:
         description: Total is the total number of active sessions
         example: 1
@@ -114,6 +123,26 @@ definitions:
         description: TotalStatements is the total count of statements in the session
         example: 1
         type: integer
+    type: object
+  api.VersionResponse:
+    properties:
+      build:
+        description: Build is the build identifier
+        example: livy-next
+        type: string
+      sparkMaster:
+        description: SparkMaster is the Spark master cluster URL
+        example: spark://spark-master:7077
+        type: string
+      sparkVersion:
+        description: SparkVersion is the version of Apache Spark running on the Connect
+          server
+        example: 4.2.0
+        type: string
+      version:
+        description: Version is the Livy-Next server version
+        example: 1.0.0
+        type: string
     type: object
   session.Session:
     properties:
@@ -163,6 +192,11 @@ definitions:
       sessionId:
         description: SessionID is the Spark Connect UUID session identifier
         example: 6002ebfc-3aaf-4d3b-8f98-07b9ae46a51f
+        type: string
+      sparkVersion:
+        description: SparkVersion is the version of Apache Spark running on the Connect
+          server
+        example: 4.2.0
         type: string
       state:
         allOf:
@@ -543,6 +577,22 @@ paths:
       summary: Cancel a statement
       tags:
       - statements
+  /version:
+    get:
+      consumes:
+      - application/json
+      description: Get Livy-Next version, Apache Spark Connect version, and cluster
+        details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.VersionResponse'
+      summary: Get server and Spark version information
+      tags:
+      - system
 swagger: "2.0"
 tags:
 - description: Interactive Spark Connect session management and lifecycle operations
