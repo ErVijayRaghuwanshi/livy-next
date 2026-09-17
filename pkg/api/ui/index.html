@@ -3,80 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livy-Next Dashboard</title>
-    <!-- Modern Premium Typography -->
+    <title>Livy-Next — Apache Spark 4.x Connect Dashboard</title>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-base: #0b0f19;
-            --bg-surface: rgba(17, 24, 39, 0.7);
-            --bg-card: rgba(31, 41, 55, 0.4);
-            --border-glow: rgba(99, 102, 241, 0.15);
-            --border-hover: rgba(99, 102, 241, 0.4);
-            --text-primary: #f3f4f6;
-            --text-secondary: #9ca3af;
+            --bg-base: #0a0d16;
+            --bg-surface: rgba(16, 22, 38, 0.75);
+            --bg-surface-elevated: rgba(22, 31, 54, 0.85);
+            --bg-card: rgba(26, 36, 62, 0.45);
+            --bg-card-hover: rgba(36, 49, 82, 0.65);
+            --border-glow: rgba(99, 102, 241, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --border-hover: rgba(129, 140, 248, 0.5);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
             --primary: #6366f1;
+            --primary-light: #818cf8;
             --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            --accent-glow: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+            --accent-purple: #a855f7;
+            --accent-cyan: #06b6d4;
             --success: #10b981;
-            --error: #ef4444;
+            --success-bg: rgba(16, 185, 129, 0.15);
             --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --error: #ef4444;
+            --error-bg: rgba(239, 68, 68, 0.15);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
         body {
             background-color: var(--bg-base);
-            background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 40%);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.10) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 60%);
             background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
 
-        h1, h2, h3, .brand-title {
+        h1, h2, h3, h4, .brand-title {
             font-family: 'Outfit', sans-serif;
         }
 
+        code, pre, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Top Navigation Header */
         header {
-            background: rgba(11, 15, 25, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 1rem 2rem;
+            background: rgba(10, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.75rem 1.75rem;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 50;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .logo-container {
+        .brand-group {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.85rem;
         }
 
-        .logo-icon {
+        .logo-box {
             width: 2.25rem;
             height: 2.25rem;
             background: var(--primary-gradient);
-            border-radius: 8px;
+            border-radius: 9px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
             font-weight: 800;
             font-size: 1.25rem;
             color: white;
@@ -84,71 +101,161 @@
         }
 
         .brand-title {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            letter-spacing: -0.025em;
-            background: linear-gradient(to right, #ffffff, #a855f7);
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #ffffff, #c084fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        .badge-spark4 {
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            color: #d8b4fe;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.725rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .status-dot-pulse {
+            width: 7px;
+            height: 7px;
+            background: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Buttons */
         .btn {
             background: var(--primary-gradient);
             color: white;
             border: none;
-            padding: 0.6rem 1.2rem;
+            padding: 0.55rem 1.1rem;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-            transition: all 0.2s ease-in-out;
-            font-size: 0.9rem;
+            gap: 0.45rem;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.85rem;
+            text-decoration: none;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-subtle);
             color: var(--text-primary);
             box-shadow: none;
         }
 
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.1);
-            box-shadow: none;
-            transform: none;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.775rem;
+            border-radius: 6px;
         }
 
         .btn-danger {
             background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
         }
 
         .btn-danger:hover {
-            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.45);
         }
 
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        /* Cluster Stats Bar */
+        .cluster-banner {
+            background: rgba(16, 22, 38, 0.6);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0.5rem 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .cluster-stats {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .stat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .stat-chip strong {
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* Main Workspace Layout */
         main {
             flex: 1;
-            padding: 2rem;
-            max-width: 1400px;
+            padding: 1.25rem 1.75rem;
+            max-width: 1700px;
             width: 100%;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 2rem;
-            height: calc(100vh - 70px);
+            grid-template-columns: 380px 1fr;
+            gap: 1.25rem;
+            height: calc(100vh - 105px);
             overflow: hidden;
         }
 
-        @media (max-width: 1024px) {
+        @media (max-width: 1100px) {
             main {
                 grid-template-columns: 1fr;
                 height: auto;
@@ -156,27 +263,29 @@
             }
         }
 
+        /* Generic Glass Panel */
         .panel {
             background: var(--bg-surface);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
         }
 
         .panel-header {
-            padding: 1.25rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(0, 0, 0, 0.15);
         }
 
         .panel-title {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: white;
             display: flex;
@@ -184,20 +293,89 @@
             gap: 0.5rem;
         }
 
+        /* Session Sidebar */
+        .sidebar-search {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-input-box svg {
+            position: absolute;
+            left: 0.75rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: white;
+            padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+            border-radius: 7px;
+            font-size: 0.825rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-light);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .filter-pill {
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            font-size: 0.725rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .filter-pill:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .filter-pill.active {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
         .list-container {
             flex: 1;
             overflow-y: auto;
-            padding: 1rem;
+            padding: 0.85rem;
         }
 
+        /* Session Cards */
         .session-card {
             background: var(--bg-card);
-            border: 1px solid var(--border-glow);
-            border-radius: 12px;
-            padding: 1rem;
+            border: 1px solid var(--border-subtle);
+            border-radius: 11px;
+            padding: 0.9rem;
             margin-bottom: 0.75rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
@@ -208,20 +386,20 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 4px;
+            width: 3.5px;
             background: transparent;
             transition: background-color 0.2s ease;
         }
 
         .session-card:hover {
             border-color: var(--border-hover);
-            transform: translateX(4px);
-            background: rgba(31, 41, 55, 0.6);
+            transform: translateX(3px);
+            background: var(--bg-card-hover);
         }
 
         .session-card.active {
             border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
+            background: rgba(99, 102, 241, 0.12);
         }
 
         .session-card.active::before {
@@ -232,58 +410,108 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.45rem;
         }
 
-        .session-id {
+        .session-id-title {
             font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 1.1rem;
+            font-weight: 600;
+            font-size: 0.975rem;
+            color: white;
         }
 
         .badge {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
-            padding: 0.25rem 0.6rem;
+            padding: 0.2rem 0.55rem;
             border-radius: 20px;
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
+            letter-spacing: 0.025em;
         }
 
         .badge-idle {
-            background: rgba(16, 185, 129, 0.15);
+            background: var(--success-bg);
             color: var(--success);
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .badge-busy {
-            background: rgba(245, 158, 11, 0.15);
+            background: var(--warning-bg);
             color: var(--warning);
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
         .badge-starting {
             background: rgba(99, 102, 241, 0.15);
-            color: var(--primary);
+            color: var(--primary-light);
             border: 1px solid rgba(99, 102, 241, 0.3);
         }
 
         .badge-dead {
-            background: rgba(239, 68, 68, 0.15);
+            background: var(--error-bg);
             color: var(--error);
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .timeout-progress-container {
-            margin-top: 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
+        .session-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.3rem;
+            font-size: 0.775rem;
+            color: var(--text-secondary);
+            margin-top: 0.45rem;
+        }
+
+        .session-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .meta-label {
+            color: var(--text-muted);
+        }
+
+        .meta-val-badge {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.15rem 0.4rem;
             border-radius: 4px;
-            height: 0.85rem;
+            font-size: 0.725rem;
+            color: #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            padding: 2px;
+            border-radius: 3px;
+        }
+
+        .copy-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Timeout Progress Bar */
+        .timeout-progress-container {
+            margin-top: 0.65rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            height: 0.8rem;
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
 
         .timeout-progress-bar {
@@ -302,27 +530,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65rem;
+            font-size: 0.625rem;
             font-weight: 600;
             color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
             font-family: 'JetBrains Mono', monospace;
         }
 
-        .session-meta {
-            font-size: 0.825rem;
-            color: var(--text-secondary);
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .session-meta-item {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        /* Detail Panel Styles */
+        /* Detail Area */
         .detail-placeholder {
             display: flex;
             flex-direction: column;
@@ -330,15 +545,15 @@
             justify-content: center;
             color: var(--text-secondary);
             text-align: center;
-            padding: 3rem;
-            gap: 1rem;
+            padding: 4rem 2rem;
+            gap: 1.25rem;
             height: 100%;
         }
 
         .detail-placeholder svg {
-            width: 4rem;
-            height: 4rem;
-            stroke: rgba(255, 255, 255, 0.1);
+            width: 4.5rem;
+            height: 4.5rem;
+            stroke: rgba(255, 255, 255, 0.12);
         }
 
         .detail-content {
@@ -348,37 +563,42 @@
             overflow: hidden;
         }
 
-        .tabs {
+        /* Tabs */
+        .tabs-bar {
             display: flex;
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.25);
+            border-bottom: 1px solid var(--border-subtle);
             padding: 0 1rem;
         }
 
-        .tab {
-            padding: 1rem 1.25rem;
+        .tab-btn {
+            padding: 0.85rem 1.25rem;
             color: var(--text-secondary);
             font-weight: 500;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             cursor: pointer;
             border-bottom: 2px solid transparent;
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
         }
 
-        .tab:hover {
+        .tab-btn:hover {
             color: white;
         }
 
-        .tab.active {
-            color: var(--primary);
+        .tab-btn.active {
+            color: var(--primary-light);
             border-bottom-color: var(--primary);
+            font-weight: 600;
         }
 
         .tab-pane {
             display: none;
             flex: 1;
             overflow-y: auto;
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
 
         .tab-pane.active {
@@ -386,12 +606,33 @@
             flex-direction: column;
         }
 
-        /* Execution Console Styles */
-        .sql-editor-container {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 1rem;
+        /* SQL Studio Tab */
+        .sql-studio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.65rem;
+        }
+
+        .sql-templates-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.775rem;
+            outline: none;
+        }
+
+        .sql-templates-select:focus {
+            border-color: var(--primary-light);
+        }
+
+        .sql-editor-card {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-subtle);
+            border-radius: 11px;
+            padding: 0.9rem;
             margin-bottom: 1rem;
             position: relative;
         }
@@ -401,124 +642,265 @@
             min-height: 120px;
             background: transparent;
             border: none;
-            color: #10b981;
+            color: #38bdf8;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             resize: vertical;
             outline: none;
-            line-height: 1.5;
+            line-height: 1.55;
+        }
+
+        .sql-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.65rem;
+            padding-top: 0.65rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tags-input-box {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.775rem;
+            color: var(--text-muted);
+        }
+
+        .tags-input {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: white;
+            padding: 0.35rem 0.6rem;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            outline: none;
+            width: 180px;
         }
 
         .sql-actions {
             display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
             align-items: center;
+            gap: 0.75rem;
         }
 
-        .results-container {
+        /* Query Results Viewer */
+        .results-card {
             flex: 1;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-subtle);
+            border-radius: 11px;
+            background: rgba(0, 0, 0, 0.25);
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            min-height: 250px;
         }
 
-        .results-header {
-            padding: 0.75rem 1rem;
+        .results-toolbar {
+            padding: 0.65rem 1rem;
             background: rgba(255, 255, 255, 0.02);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.8rem;
             color: var(--text-secondary);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
-        .results-table-wrapper {
+        .results-tools {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .results-table-scroll {
             overflow: auto;
             flex: 1;
         }
 
-        table.results-table {
+        table.spark-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.875rem;
+            font-size: 0.825rem;
             text-align: left;
         }
 
-        table.results-table th {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 0.75rem 1rem;
+        table.spark-table th {
+            background: rgba(255, 255, 255, 0.035);
+            padding: 0.7rem 0.95rem;
             color: white;
             font-weight: 600;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid var(--border-subtle);
             position: sticky;
             top: 0;
+            z-index: 1;
         }
 
-        table.results-table td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-            color: var(--text-secondary);
+        .col-type-tag {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+            margin-left: 0.35rem;
+            text-transform: uppercase;
+        }
+
+        table.spark-table td {
+            padding: 0.65rem 0.95rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+            color: #cbd5e1;
             white-space: nowrap;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.775rem;
         }
 
-        table.results-table tr:hover td {
+        table.spark-table tr:hover td {
             color: white;
-            background: rgba(255, 255, 255, 0.01);
+            background: rgba(99, 102, 241, 0.06);
         }
 
-        /* Statement List Styles */
-        .statement-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .statement-meta {
+        /* Results Pagination Footer */
+        .pagination-bar {
+            padding: 0.55rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            align-items: center;
+            font-size: 0.775rem;
+            color: var(--text-secondary);
+        }
+
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Statement History Tab */
+        .stmt-card {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9px;
+            padding: 0.9rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.15s ease;
+        }
+
+        .stmt-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .stmt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.45rem;
             font-size: 0.8rem;
             color: var(--text-secondary);
         }
 
-        .statement-code {
+        .stmt-code {
             font-family: 'JetBrains Mono', monospace;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 0.7rem;
             border-radius: 6px;
             color: #60a5fa;
-            font-size: 0.85rem;
+            font-size: 0.825rem;
             overflow-x: auto;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.65rem;
+            line-height: 1.45;
         }
 
-        /* Logs Panel */
-        .log-terminal {
-            background: #05070c;
-            border-radius: 12px;
-            padding: 1.25rem;
+        .stmt-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .stmt-tags-list {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .stmt-tag {
+            background: rgba(168, 85, 247, 0.12);
+            color: #d8b4fe;
+            border: 1px solid rgba(168, 85, 247, 0.25);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.675rem;
             font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Config & Info Tab */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 0.85rem;
+        }
+
+        .config-card {
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid var(--border-subtle);
+            border-radius: 9px;
+            padding: 0.9rem;
+        }
+
+        .config-card h4 {
             font-size: 0.85rem;
-            color: #d1d5db;
+            color: var(--primary-light);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .config-table {
+            width: 100%;
+            font-size: 0.775rem;
+            border-collapse: collapse;
+        }
+
+        .config-table td {
+            padding: 0.35rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+        }
+
+        .config-table td:first-child {
+            color: var(--text-muted);
+            width: 45%;
+        }
+
+        .config-table td:last-child {
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Logs Tab */
+        .terminal-box {
+            background: #040711;
+            border-radius: 11px;
+            padding: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: #cbd5e1;
             line-height: 1.6;
             overflow-y: auto;
             flex: 1;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
         }
 
-        .log-line {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.01);
-            padding: 0.25rem 0;
+        .terminal-line {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.015);
+            padding: 0.2rem 0;
             white-space: pre-wrap;
         }
 
-        /* Modal Styles */
+        /* Modal Dialog */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -526,141 +908,223 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            z-index: 20;
+            backdrop-filter: blur(10px);
+            z-index: 100;
             display: none;
             align-items: center;
             justify-content: center;
             opacity: 0;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.2s ease;
         }
 
-        .modal {
-            background: var(--bg-base);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border-radius: 16px;
-            width: 450px;
+        .modal-window {
+            background: #0d1222;
+            border: 1px solid var(--border-hover);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.65);
+            border-radius: 14px;
+            width: 520px;
+            max-width: 92vw;
             overflow: hidden;
             transform: scale(0.95);
-            transition: transform 0.25s ease;
+            transition: transform 0.2s ease;
         }
 
         .modal-header {
-            padding: 1.25rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.1rem 1.35rem;
+            border-bottom: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(0, 0, 0, 0.25);
         }
 
         .modal-body {
-            padding: 1.5rem;
+            padding: 1.35rem;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
-        .form-group {
-            margin-bottom: 1.25rem;
+        .form-row {
+            margin-bottom: 1rem;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-secondary);
         }
 
-        select.form-control, input.form-control {
+        .form-input, .form-select {
             width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
             color: white;
-            padding: 0.75rem;
-            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            border-radius: 7px;
             outline: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: border-color 0.2s ease;
         }
 
-        select.form-control:focus, input.form-control:focus {
-            border-color: var(--primary);
+        .form-input:focus, .form-select:focus {
+            border-color: var(--primary-light);
+            background: rgba(255, 255, 255, 0.06);
         }
 
         .modal-footer {
-            padding: 1.25rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1rem 1.35rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-top: 1px solid var(--border-subtle);
             display: flex;
             justify-content: flex-end;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
-        .no-data {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: 2rem;
-            font-size: 0.9rem;
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(16, 22, 38, 0.95);
+            border: 1px solid var(--primary);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.825rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.25s ease;
+            pointer-events: none;
         }
 
-        .loading-spinner {
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .spinner {
             display: inline-block;
-            width: 1.5rem;
-            height: 1.5rem;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.15);
             border-radius: 50%;
-            border-top-color: var(--primary);
-            animation: spin 0.8s linear infinite;
+            border-top-color: currentColor;
+            animation: spin 0.7s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .no-data {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2.5rem 1rem;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
 
+    <!-- Header -->
     <header>
-        <div class="logo-container">
-            <div class="logo-icon">L</div>
-            <div class="brand-title">LIVY-NEXT</div>
-            <span class="badge badge-starting" style="text-transform:none; margin-left: 0.5rem; font-size: 0.7rem; font-family:'JetBrains Mono',monospace;">v1.0.0 (Go/Connect)</span>
+        <div class="brand-group">
+            <div class="logo-box">L</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="brand-title">LIVY-NEXT</span>
+                    <span class="badge-spark4">
+                        <span class="status-dot-pulse"></span>
+                        Spark 4.x Connect
+                    </span>
+                </div>
+            </div>
         </div>
-        <div style="display:flex; gap:1rem;">
-            <a href="/swagger/index.html" class="btn btn-secondary" target="_blank">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+
+        <div class="header-actions">
+            <a href="/swagger/index.html" class="btn btn-secondary btn-sm" target="_blank" title="Interactive OpenAPI Documentation">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Swagger API
             </a>
-            <button class="btn" onclick="openNewSessionModal()">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+            <button class="btn btn-sm" onclick="openNewSessionModal()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
                 New Session
             </button>
         </div>
     </header>
 
+    <!-- Cluster Stats Sub-header -->
+    <div class="cluster-banner">
+        <div class="cluster-stats">
+            <div class="stat-chip">
+                <span>Total Sessions:</span>
+                <strong id="stat-total-sessions">0</strong>
+            </div>
+            <div class="stat-chip">
+                <span>Active:</span>
+                <strong id="stat-active-sessions" style="color:#10b981;">0</strong>
+            </div>
+            <div class="stat-chip">
+                <span>Dead / Terminated:</span>
+                <strong id="stat-dead-sessions" style="color:#ef4444;">0</strong>
+            </div>
+            <div class="stat-chip">
+                <span>Server Timeout:</span>
+                <strong id="stat-server-timeout" style="color:#818cf8;">Syncing...</strong>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="font-size:0.75rem; color:var(--text-muted);" id="stat-last-sync">Last updated: Just now</span>
+            <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.5rem;" onclick="loadSessions()" title="Refresh sessions">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Workspace Main -->
     <main>
-        <!-- Session List Panel -->
+        <!-- Sidebar: Session List -->
         <div class="panel">
             <div class="panel-header">
                 <div class="panel-title">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                     Interactive Sessions
                 </div>
-                <button class="btn btn-secondary" style="padding: 0.4rem; border-radius: 6px;" onclick="loadSessions()">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"/></svg>
-                </button>
             </div>
+
+            <!-- Search & Filter Bar -->
+            <div class="sidebar-search">
+                <div class="search-input-box">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" class="search-input" id="session-search-input" placeholder="Filter by name, ID, user, UUID..." oninput="filterSessions()">
+                </div>
+                <div class="filter-pills">
+                    <span class="filter-pill active" data-filter="all" onclick="setFilter('all')">All</span>
+                    <span class="filter-pill" data-filter="idle" onclick="setFilter('idle')">Idle</span>
+                    <span class="filter-pill" data-filter="busy" onclick="setFilter('busy')">Busy</span>
+                    <span class="filter-pill" data-filter="dead" onclick="setFilter('dead')">Dead</span>
+                </div>
+            </div>
+
             <div class="list-container" id="session-list">
-                <div class="no-data">Loading sessions...</div>
+                <div class="no-data">Loading interactive sessions...</div>
             </div>
         </div>
 
-        <!-- Session Detail Panel -->
+        <!-- Detail Area -->
         <div class="panel" id="detail-panel">
             <div class="detail-placeholder">
-                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 15l-6 5L3 9v11a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2h-3l-2-4H9L7 8H4v2h3v10"/></svg>
+                <svg fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path d="M15 15l-6 5L3 9v11a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2h-3l-2-4H9L7 8H4v2h3v10"/></svg>
                 <div>
-                    <h3 style="margin-bottom: 0.25rem;">No Session Selected</h3>
-                    <p style="font-size: 0.85rem;">Select an active interactive session from the sidebar to query SQL statements and view logs.</p>
+                    <h3 style="margin-bottom: 0.35rem; font-size:1.15rem;">No Session Selected</h3>
+                    <p style="font-size: 0.85rem; max-width: 380px;">Select an interactive session from the left sidebar to execute SQL statements, inspect schema, paginate results, and monitor logs.</p>
                 </div>
             </div>
         </div>
@@ -668,73 +1132,121 @@
 
     <!-- Create Session Modal -->
     <div class="modal-overlay" id="create-modal-overlay">
-        <div class="modal">
+        <div class="modal-window">
             <div class="modal-header">
-                <h3 style="font-weight:600;">Create Interactive Session</h3>
-                <button class="btn btn-secondary" style="padding:0.25rem; border:none; background:transparent;" onclick="closeNewSessionModal()">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                <h3 style="font-weight:600; font-size:1.05rem;">Create Spark Connect Session</h3>
+                <button class="btn btn-secondary btn-sm" style="border:none; background:transparent;" onclick="closeNewSessionModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
+                <div class="form-row">
                     <label class="form-label">Session Kind</label>
-                    <select class="form-control" id="session-kind">
-                        <option value="spark">Spark (SQL & DataFrame)</option>
+                    <select class="form-select" id="session-kind">
+                        <option value="spark">Spark (SQL, DataFrame & Arrow)</option>
+                        <option value="pyspark">PySpark</option>
+                        <option value="sparkr">SparkR</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-row">
                     <label class="form-label">Session Name (Optional)</label>
-                    <input type="text" class="form-control" id="session-name" placeholder="e.g. my-analysis-session">
+                    <input type="text" class="form-input" id="session-name" placeholder="e.g. adhoc-analytics">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">User ID (Optional)</label>
-                    <input type="text" class="form-control" id="user-id" placeholder="e.g. ervijay">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+                    <div class="form-row">
+                        <label class="form-label">User ID (Multi-Tenancy)</label>
+                        <input type="text" class="form-input" id="user-id" placeholder="e.g. alice">
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label">Proxy User (Livy Compat)</label>
+                        <input type="text" class="form-input" id="proxy-user" placeholder="e.g. spark_admin">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Proxy User (Optional)</label>
-                    <input type="text" class="form-control" id="proxy-user" placeholder="e.g. spark_admin">
+                <div class="form-row">
+                    <label class="form-label">Session UUID (Spark Connect Session ID)</label>
+                    <input type="text" class="form-input mono" id="session-id" placeholder="Leave empty for auto UUIDv4">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Spark Connect Session ID (Optional UUID)</label>
-                    <input type="text" class="form-control" id="session-id" placeholder="Leave empty for auto-generated UUIDv4">
+                <div class="form-row">
+                    <label class="form-label">User Agent</label>
+                    <input type="text" class="form-input" id="user-agent" placeholder="e.g. jupyter, argus (default: livy-next)">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">User Agent (Optional)</label>
-                    <input type="text" class="form-control" id="user-agent" placeholder="e.g. jupyter, airflow (default: livy-next)">
+                <div class="form-row">
+                    <label class="form-label">Custom Spark Configurations (JSON object, Optional)</label>
+                    <textarea class="form-input mono" id="session-conf" rows="2" placeholder='{"spark.sql.shuffle.partitions": "10"}' style="resize:vertical;"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeNewSessionModal()">Cancel</button>
-                <button class="btn" onclick="submitCreateSession()">Create</button>
+                <button class="btn btn-secondary btn-sm" onclick="closeNewSessionModal()">Cancel</button>
+                <button class="btn btn-sm" id="btn-submit-session" onclick="submitCreateSession()">Create Session</button>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notification Element -->
+    <div class="toast" id="toast-notification">
+        <svg width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-message">Notification</span>
+    </div>
+
     <script>
-        let sessions = [];
+        // State
+        let allSessions = [];
+        let filteredSessions = [];
         let selectedSessionId = null;
         let selectedTab = 'console';
-        let refreshInterval = null;
-        let activeStatementPoller = null;
+        let currentFilter = 'all';
         let idleTimeoutMs = 0;
         let deadTimeoutMs = 0;
+        let activeStatementPoller = null;
+        let currentExecutingStmtId = null;
 
-        // Init
+        // Pagination State
+        let currentStmtPagination = {
+            stmtId: null,
+            from: 0,
+            size: 25,
+            total: 0
+        };
+
+        const SQL_TEMPLATES = {
+            'version': 'SELECT version() AS spark_version, current_timestamp() AS server_time;',
+            'databases': 'SHOW DATABASES;',
+            'tables': 'SHOW TABLES;',
+            'range': 'SELECT id, id * 2 AS doubled, id * 10 AS decade FROM range(1, 100);',
+            'catalog': 'SELECT current_catalog(), current_database();',
+            'benchmark': 'SELECT explode(sequence(1, 10)) AS num, rand() AS random_metric;'
+        };
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             loadSessions();
-            setInterval(loadSessions, 10000); // Poll session states every 10s
-            setInterval(updateTimeoutProgressBars, 1000); // Update countdown bars every 1s
+            setInterval(loadSessions, 8000); // 8s poll
+            setInterval(updateTimeoutBars, 1000); // 1s countdown refresh
         });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function copyToClipboard(text, label) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`Copied ${label || 'text'} to clipboard!`);
+            }).catch(err => {
+                showToast(`Failed to copy: ${err}`);
+            });
+        }
 
         function formatUiUrl(url) {
             if (!url) return '';
             try {
                 const parsed = new URL(url, window.location.origin);
-                // If the link uses localhost but browser accessed via LAN IP or hostname, align hostnames
                 if (parsed.hostname === 'localhost' && window.location.hostname !== 'localhost') {
                     parsed.hostname = window.location.hostname;
                 }
-                // If internal container port 4040 was set, remap to host-mapped Spark UI port 4141
                 if (parsed.port === '4040') {
                     parsed.port = '4141';
                 }
@@ -747,48 +1259,135 @@
         async function loadSessions() {
             try {
                 const res = await fetch('/sessions');
+                if (!res.ok) return;
                 const data = await res.json();
-                sessions = data.sessions || [];
+                allSessions = data.sessions || [];
                 idleTimeoutMs = data.idleTimeout || 0;
                 deadTimeoutMs = data.deadTimeout || 0;
-                renderSessionList();
-                updateTimeoutProgressBars();
+
+                updateClusterStats(data);
+                filterSessions();
+                updateTimeoutBars();
+
                 if (selectedSessionId !== null) {
-                    const activeSess = sessions.find(s => s.id === selectedSessionId);
+                    const activeSess = allSessions.find(s => s.id === selectedSessionId);
                     if (activeSess) {
-                        // Refresh details
-                        updateSelectedSessionDetails(activeSess);
-                    } else {
-                        // Current session died
-                        selectedSessionId = null;
-                        renderPlaceholder();
+                        updateDetailHeader(activeSess);
+                        if (selectedTab === 'logs') renderLogs(activeSess);
+                        if (selectedTab === 'config') renderConfig(activeSess);
                     }
                 }
             } catch (err) {
-                console.error("Failed to load sessions", err);
+                console.error("Failed to fetch sessions", err);
             }
         }
 
-        function updateTimeoutProgressBars() {
-            sessions.forEach(s => {
+        function updateClusterStats(data) {
+            document.getElementById('stat-total-sessions').innerText = data.total || 0;
+            const activeCount = allSessions.filter(s => s.state !== 'dead').length;
+            const deadCount = allSessions.filter(s => s.state === 'dead').length;
+            document.getElementById('stat-active-sessions').innerText = activeCount;
+            document.getElementById('stat-dead-sessions').innerText = deadCount;
+
+            const timeoutMins = Math.round(data.idleTimeout / 60000);
+            document.getElementById('stat-server-timeout').innerText = timeoutMins > 0 ? `${timeoutMins}m (Spark Sync)` : 'None';
+            document.getElementById('stat-last-sync').innerText = `Updated ${new Date().toLocaleTimeString()}`;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-pill').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-filter') === filter);
+            });
+            filterSessions();
+        }
+
+        function filterSessions() {
+            const query = (document.getElementById('session-search-input').value || '').toLowerCase().trim();
+            filteredSessions = allSessions.filter(s => {
+                const matchesFilter = currentFilter === 'all' || s.state === currentFilter;
+                if (!matchesFilter) return false;
+
+                if (!query) return true;
+                const name = (s.name || '').toLowerCase();
+                const user = (s.userId || s.proxyUser || '').toLowerCase();
+                const uuid = (s.sessionId || '').toLowerCase();
+                const idStr = String(s.id);
+                return name.includes(query) || user.includes(query) || uuid.includes(query) || idStr.includes(query);
+            });
+            renderSessionCards();
+        }
+
+        function renderSessionCards() {
+            const list = document.getElementById('session-list');
+            if (filteredSessions.length === 0) {
+                list.innerHTML = `<div class="no-data">No sessions match your filter.</div>`;
+                return;
+            }
+
+            list.innerHTML = filteredSessions.map(s => {
+                const isActive = s.id === selectedSessionId ? 'active' : '';
+                let badgeClass = 'badge-idle';
+                if (s.state === 'busy') badgeClass = 'badge-busy';
+                if (s.state === 'starting') badgeClass = 'badge-starting';
+                if (s.state === 'dead') badgeClass = 'badge-dead';
+
+                const sessionName = s.name ? `${escapeHtml(s.name)}` : `Session #${s.id}`;
+                const userDisplay = escapeHtml(s.userId || s.proxyUser || 'anonymous');
+                const uuidShort = s.sessionId ? `${s.sessionId.substring(0, 8)}...` : 'N/A';
+
+                return `
+                    <div class="session-card ${isActive}" onclick="selectSession(${s.id})">
+                        <div class="session-header">
+                            <span class="session-id-title">${sessionName}</span>
+                            <span class="badge ${badgeClass}">${s.state}</span>
+                        </div>
+                        <div class="session-meta-grid">
+                            <div class="session-meta-row">
+                                <span class="meta-label">ID / Kind</span>
+                                <span style="font-weight:600; color:white;">#${s.id} &bull; <span style="color:#a855f7;">${s.kind}</span></span>
+                            </div>
+                            <div class="session-meta-row">
+                                <span class="meta-label">User Identity</span>
+                                <span class="meta-val-badge">${userDisplay}</span>
+                            </div>
+                            <div class="session-meta-row">
+                                <span class="meta-label">Spark UUID</span>
+                                <span class="meta-val-badge" title="${s.sessionId}">
+                                    ${uuidShort}
+                                    ${s.sessionId ? `<button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('${s.sessionId}', 'Session UUID')"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></button>` : ''}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="timeout-progress-container">
+                            <div class="timeout-progress-bar" id="progress-bar-${s.id}"></div>
+                            <div class="timeout-progress-text" id="progress-text-${s.id}">Calculating...</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateTimeoutBars() {
+            allSessions.forEach(s => {
                 const bar = document.getElementById(`progress-bar-${s.id}`);
                 const text = document.getElementById(`progress-text-${s.id}`);
                 if (!bar || !text) return;
 
                 const lastActivity = new Date(s.lastActivity).getTime();
                 const elapsed = Date.now() - lastActivity;
-                
+
                 let limit = 0;
                 let isDead = s.state === 'dead';
                 if (isDead) {
                     limit = deadTimeoutMs;
                 } else {
-                    limit = idleTimeoutMs;
+                    limit = s.idleTimeout > 0 ? s.idleTimeout : idleTimeoutMs;
                 }
 
                 if (limit <= 0) {
                     bar.style.width = '100%';
-                    text.innerText = isDead ? 'Terminated' : 'No timeout';
+                    text.innerText = isDead ? 'Terminated' : 'No Timeout (Active)';
                     return;
                 }
 
@@ -798,7 +1397,7 @@
                 bar.style.width = `${pct}%`;
 
                 if (isDead) {
-                    bar.style.background = 'rgba(156, 163, 175, 0.4)';
+                    bar.style.background = 'rgba(148, 163, 184, 0.4)';
                 } else if (pct > 50) {
                     bar.style.background = 'var(--success)';
                 } else if (pct > 20) {
@@ -808,340 +1407,413 @@
                 }
 
                 if (remaining <= 0) {
-                    text.innerText = isDead ? 'Expired' : 'Expiring...';
+                    text.innerText = isDead ? 'Expired (purging)' : 'Expiring...';
                 } else {
                     const secsTotal = Math.floor(remaining / 1000);
                     const mins = Math.floor(secsTotal / 60);
                     const secs = secsTotal % 60;
                     const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-                    text.innerText = isDead ? `Removing in ${timeStr}` : `Expires in ${timeStr}`;
+                    text.innerText = isDead ? `Cleanup in ${timeStr}` : `Idle Timeout: ${timeStr}`;
                 }
             });
         }
 
-        function renderSessionList() {
-            const list = document.getElementById('session-list');
-            if (sessions.length === 0) {
-                list.innerHTML = `<div class="no-data">No active sessions. Click "New Session" to start.</div>`;
-                return;
-            }
-
-            list.innerHTML = sessions.map(s => {
-                const isActive = s.id === selectedSessionId ? 'active' : '';
-                let badgeClass = 'badge-idle';
-                if (s.state === 'busy') badgeClass = 'badge-busy';
-                if (s.state === 'starting') badgeClass = 'badge-starting';
-                if (s.state === 'dead') badgeClass = 'badge-dead';
-
-                const sessionNameDisplay = s.name ? `${escapeHtml(s.name)} (#${s.id})` : `Session #${s.id}`;
-                const uiUrl = formatUiUrl(s.appInfo && s.appInfo.sparkUiUrl);
-                const appIdHtml = uiUrl ? `<a href="${uiUrl}" target="_blank" style="color:#60a5fa; text-decoration:underline; font-weight: 500;">${s.appId}</a>` : (s.appId || 'N/A');
-
-                return `
-                    <div class="session-card ${isActive}" onclick="selectSession(${s.id})">
-                        <div class="session-header">
-                            <span class="session-id">${sessionNameDisplay}</span>
-                            <span class="badge ${badgeClass}">${s.state}</span>
-                        </div>
-                        <div class="session-meta">
-                            <div class="session-meta-item">
-                                <span>Kind:</span> <span>${s.kind}</span>
-                            </div>
-                            <div class="session-meta-item">
-                                <span>User:</span> <span style="font-size:0.75rem; color: #a5b4fc;">${escapeHtml(s.userId || s.proxyUser || 'N/A')}</span>
-                            </div>
-                            <div class="session-meta-item">
-                                <span>Session ID:</span> <span style="font-family: monospace; font-size:0.75rem;">${s.sessionId || 'N/A'}</span>
-                            </div>
-                            <div class="session-meta-item">
-                                <span>App ID:</span> <span style="font-family: monospace; font-size:0.75rem;">${appIdHtml}</span>
-                            </div>
-                        </div>
-                        <div class="timeout-progress-container" id="progress-container-${s.id}">
-                            <div class="timeout-progress-bar" id="progress-bar-${s.id}"></div>
-                            <div class="timeout-progress-text" id="progress-text-${s.id}">Calculating...</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
         function selectSession(id) {
             selectedSessionId = id;
-            renderSessionList();
-            renderSessionDetailPane();
-            
-            const sess = sessions.find(s => s.id === id);
+            renderSessionCards();
+            renderSessionDetailFrame();
+
+            const sess = allSessions.find(s => s.id === id);
             if (sess) {
-                updateSelectedSessionDetails(sess);
-                loadStatements();
+                updateDetailHeader(sess);
+                switchTab(selectedTab || 'console');
             }
         }
 
-        function renderPlaceholder() {
-            const pane = document.getElementById('detail-panel');
-            pane.innerHTML = `
-                <div class="detail-placeholder">
-                    <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M15 15l-6 5L3 9v11a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2h-3l-2-4H9L7 8H4v2h3v10"/></svg>
-                    <div>
-                        <h3 style="margin-bottom: 0.25rem;">No Session Selected</h3>
-                        <p style="font-size: 0.85rem;">Select an active interactive session from the sidebar to query SQL statements and view logs.</p>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderSessionDetailPane() {
+        function renderSessionDetailFrame() {
             const pane = document.getElementById('detail-panel');
             pane.innerHTML = `
                 <div class="detail-content">
-                    <div class="panel-header" style="background: rgba(0,0,0,0.1);">
+                    <div class="panel-header">
                         <div class="panel-title" id="detail-session-title">Session Details</div>
-                        <div style="display:flex; gap:0.75rem; align-items:center;">
-                            <span id="detail-spark-ui-btn"></span>
-                            <button class="btn btn-danger" id="btn-terminate-session" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteSession(${selectedSessionId})">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        <div style="display:flex; gap:0.6rem; align-items:center;">
+                            <span id="detail-spark-links"></span>
+                            <button class="btn btn-danger btn-sm" id="btn-terminate-session" onclick="terminateSession(${selectedSessionId})">
+                                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 Terminate
                             </button>
                         </div>
                     </div>
-                    <div class="tabs">
-                        <div class="tab ${selectedTab === 'console' ? 'active' : ''}" onclick="switchTab('console')">SQL Console</div>
-                        <div class="tab ${selectedTab === 'statements' ? 'active' : ''}" onclick="switchTab('statements')">Statements History</div>
-                        <div class="tab ${selectedTab === 'logs' ? 'active' : ''}" onclick="switchTab('logs')">Session Logs</div>
+
+                    <div class="tabs-bar">
+                        <div class="tab-btn ${selectedTab === 'console' ? 'active' : ''}" onclick="switchTab('console')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            SQL Studio
+                        </div>
+                        <div class="tab-btn ${selectedTab === 'history' ? 'active' : ''}" onclick="switchTab('history')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Statement History
+                        </div>
+                        <div class="tab-btn ${selectedTab === 'config' ? 'active' : ''}" onclick="switchTab('config')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Spark Config
+                        </div>
+                        <div class="tab-btn ${selectedTab === 'logs' ? 'active' : ''}" onclick="switchTab('logs')">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                            Logs
+                        </div>
                     </div>
 
-                    <!-- Tab Panel Console -->
+                    <!-- Tab: SQL Studio -->
                     <div class="tab-pane ${selectedTab === 'console' ? 'active' : ''}" id="pane-console">
-                        <div class="sql-editor-container">
-                            <textarea class="sql-editor" id="sql-query-input" placeholder="-- Write SQL Statement here\nSELECT * FROM range(1, 100);"></textarea>
-                            <div class="sql-actions">
-                                <div id="execute-status" style="font-size:0.85rem; color:var(--text-secondary);"></div>
-                                <button class="btn" id="btn-execute-sql" onclick="executeSQL()">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    Execute SQL
-                                </button>
+                        <div class="sql-studio-header">
+                            <span style="font-size:0.8rem; color:var(--text-secondary); font-weight:500;">Interactive SQL Query & DataFrame Execution</span>
+                            <div style="display:flex; align-items:center; gap:0.5rem;">
+                                <label style="font-size:0.75rem; color:var(--text-muted);">Quick Template:</label>
+                                <select class="sql-templates-select" onchange="applySqlTemplate(this.value)">
+                                    <option value="">-- Choose SQL Snippet --</option>
+                                    <option value="version">Spark Version & Time</option>
+                                    <option value="databases">Show Databases</option>
+                                    <option value="tables">Show Tables</option>
+                                    <option value="range">Generate Range Sequence</option>
+                                    <option value="catalog">Current Catalog & DB</option>
+                                    <option value="benchmark">Random Array Explode</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="results-container">
-                            <div class="results-header">
-                                <span>Output Results</span>
-                                <span id="results-count">0 rows</span>
+
+                        <div class="sql-editor-card">
+                            <textarea class="sql-editor" id="sql-query-input" placeholder="-- Write Spark SQL statement here (Press Cmd+Enter or Ctrl+Enter to run)&#10;SELECT 'Spark Connect' AS engine, version() AS version, current_timestamp() AS now;"></textarea>
+                            <div class="sql-toolbar">
+                                <div class="tags-input-box">
+                                    <span>Tags:</span>
+                                    <input type="text" class="tags-input" id="sql-tags-input" placeholder="e.g. adhoc, analytics">
+                                    <span style="font-size:0.7rem; color:var(--text-muted);">(optional)</span>
+                                </div>
+                                <div class="sql-actions">
+                                    <span id="execute-status-msg" style="font-size:0.775rem; color:var(--text-secondary);"></span>
+                                    <button class="btn btn-danger btn-sm" id="btn-cancel-sql" style="display:none;" onclick="cancelActiveStatement()">
+                                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                                        Cancel
+                                    </button>
+                                    <button class="btn btn-sm" id="btn-execute-sql" onclick="executeSQL()">
+                                        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Execute SQL <span style="font-size:0.7rem; opacity:0.7; margin-left:2px;">(⌘↵)</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="results-table-wrapper" id="console-results">
-                                <div class="no-data">Run a SQL statement above to display table results.</div>
+                        </div>
+
+                        <!-- Results Card with Pagination -->
+                        <div class="results-card">
+                            <div class="results-toolbar">
+                                <div>
+                                    <strong style="color:white;">Result Rows</strong>
+                                    <span id="results-count-label" style="margin-left:0.5rem; font-family:'JetBrains Mono',monospace; font-size:0.75rem;">0 rows</span>
+                                </div>
+                                <div class="results-tools">
+                                    <button class="btn btn-secondary btn-sm" onclick="exportResultsCSV()" title="Export current results as CSV">
+                                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        Export CSV
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="copyResultsJSON()" title="Copy result rows as JSON">
+                                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                        Copy JSON
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="results-table-scroll" id="console-results-container">
+                                <div class="no-data">Run a SQL statement above to inspect output dataframe.</div>
+                            </div>
+
+                            <div class="pagination-bar" id="pagination-footer" style="display:none;">
+                                <div id="pagination-summary">Showing 0 - 0 of 0 rows</div>
+                                <div class="page-controls">
+                                    <label style="font-size:0.725rem; color:var(--text-muted);">Page Size:</label>
+                                    <select class="sql-templates-select" id="page-size-select" onchange="changePageSize(Number(this.value))">
+                                        <option value="10">10</option>
+                                        <option value="25" selected>25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                        <option value="500">500</option>
+                                    </select>
+                                    <button class="btn btn-secondary btn-sm" id="btn-prev-page" onclick="prevPage()">&larr; Prev</button>
+                                    <button class="btn btn-secondary btn-sm" id="btn-next-page" onclick="nextPage()">Next &rarr;</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tab Panel History -->
-                    <div class="tab-pane ${selectedTab === 'statements' ? 'active' : ''}" id="pane-statements">
+                    <!-- Tab: Statement History -->
+                    <div class="tab-pane ${selectedTab === 'history' ? 'active' : ''}" id="pane-history">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                            <span style="font-size:0.8rem; color:var(--text-secondary);">Execution history within this session</span>
+                            <button class="btn btn-secondary btn-sm" onclick="loadStatementHistory()">Refresh History</button>
+                        </div>
                         <div id="statements-list-container">
-                            <div class="no-data">No statements executed in this session.</div>
+                            <div class="no-data">Loading statement history...</div>
                         </div>
                     </div>
 
-                    <!-- Tab Panel Logs -->
+                    <!-- Tab: Spark Config -->
+                    <div class="tab-pane ${selectedTab === 'config' ? 'active' : ''}" id="pane-config">
+                        <div class="config-grid" id="config-content">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Tab: Logs -->
                     <div class="tab-pane ${selectedTab === 'logs' ? 'active' : ''}" id="pane-logs">
-                        <div class="log-terminal" id="logs-container">
-                            <!-- Logs will auto populate here -->
+                        <div class="terminal-box" id="logs-container">
+                            <!-- Populated dynamically -->
                         </div>
                     </div>
                 </div>
             `;
-        }
 
-        function switchTab(tabName) {
-            selectedTab = tabName;
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            
-            // Activate current tab/pane
-            const tabElements = document.querySelectorAll('.tab');
-            if (tabName === 'console') {
-                tabElements[0].classList.add('active');
-                document.getElementById('pane-console').classList.add('active');
-            } else if (tabName === 'statements') {
-                tabElements[1].classList.add('active');
-                document.getElementById('pane-statements').classList.add('active');
-                loadStatements();
-            } else if (tabName === 'logs') {
-                tabElements[2].classList.add('active');
-                document.getElementById('pane-logs').classList.add('active');
+            // Attach Ctrl+Enter / Cmd+Enter shortcut to SQL textarea
+            const textarea = document.getElementById('sql-query-input');
+            if (textarea) {
+                textarea.addEventListener('keydown', (e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        executeSQL();
+                    }
+                });
             }
         }
 
-        function updateSelectedSessionDetails(sess) {
+        function updateDetailHeader(sess) {
             const displayName = sess.name ? `${escapeHtml(sess.name)} (#${sess.id})` : `Session #${sess.id}`;
             const title = document.getElementById('detail-session-title');
             if (title) {
-                title.innerText = `${displayName} (${sess.kind})`;
+                title.innerHTML = `
+                    <span>${displayName}</span>
+                    <span class="badge ${sess.state === 'dead' ? 'badge-dead' : 'badge-idle'}" style="margin-left:0.5rem;">${sess.state}</span>
+                `;
             }
 
-            const sparkUiBtn = document.getElementById('detail-spark-ui-btn');
-            if (sparkUiBtn) {
+            const linksBox = document.getElementById('detail-spark-links');
+            if (linksBox) {
                 const uiUrl = formatUiUrl(sess.appInfo && sess.appInfo.sparkUiUrl);
                 const connectUrl = formatUiUrl(sess.appInfo && sess.appInfo.sparkConnectUiUrl);
-                let btnsHtml = '';
+                const historyUrl = formatUiUrl(sess.appInfo && sess.appInfo.sparkHistoryUrl);
+
+                let html = '';
                 if (connectUrl) {
-                    btnsHtml += `
-                        <a href="${connectUrl}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.15);" target="_blank" title="Open Spark Connect Session in Spark UI">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    html += `
+                        <a href="${connectUrl}" class="btn btn-secondary btn-sm" style="border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.15); color: #d8b4fe;" target="_blank" title="Open Spark Connect Session in Spark UI">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             Connect UI
                         </a>
                     `;
                 }
                 if (uiUrl) {
-                    btnsHtml += `
-                        <a href="${uiUrl}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" target="_blank">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    html += `
+                        <a href="${uiUrl}" class="btn btn-secondary btn-sm" target="_blank" title="Open Master Spark UI">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                             Spark UI
                         </a>
                     `;
                 }
-                sparkUiBtn.innerHTML = btnsHtml;
+                if (historyUrl) {
+                    html += `
+                        <a href="${historyUrl}" class="btn btn-secondary btn-sm" target="_blank" title="Open Spark History Server">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            History
+                        </a>
+                    `;
+                }
+                linksBox.innerHTML = html;
             }
 
-            const logsContainer = document.getElementById('logs-container');
-            if (logsContainer) {
-                logsContainer.innerHTML = (sess.log || []).map(line => `
-                    <div class="log-line">${line}</div>
-                `).join('');
-            }
-
-            const terminateBtn = document.getElementById('btn-terminate-session');
-            const sqlQueryInput = document.getElementById('sql-query-input');
-            const btnExecuteSql = document.getElementById('btn-execute-sql');
-
+            // If session is dead, lock controls
+            const btnExec = document.getElementById('btn-execute-sql');
+            const sqlInput = document.getElementById('sql-query-input');
+            const btnTerm = document.getElementById('btn-terminate-session');
             if (sess.state === 'dead') {
-                if (terminateBtn) {
-                    terminateBtn.disabled = true;
-                    terminateBtn.style.opacity = '0.5';
-                    terminateBtn.style.cursor = 'not-allowed';
-                    terminateBtn.innerHTML = `
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
-                        Terminated
-                    `;
+                if (btnExec) btnExec.disabled = true;
+                if (sqlInput) {
+                    sqlInput.disabled = true;
+                    sqlInput.placeholder = "-- Session terminated. SQL execution disabled.";
                 }
-                if (sqlQueryInput) {
-                    sqlQueryInput.disabled = true;
-                    sqlQueryInput.placeholder = "-- Session is terminated. You cannot execute SQL queries.";
-                    sqlQueryInput.value = "";
-                }
-                if (btnExecuteSql) {
-                    btnExecuteSql.disabled = true;
-                    btnExecuteSql.style.opacity = '0.5';
-                    btnExecuteSql.style.cursor = 'not-allowed';
-                }
-            } else {
-                if (terminateBtn) {
-                    terminateBtn.disabled = false;
-                    terminateBtn.style.opacity = '1';
-                    terminateBtn.style.cursor = 'pointer';
-                    terminateBtn.innerHTML = `
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        Terminate
-                    `;
-                }
-                if (sqlQueryInput) {
-                    sqlQueryInput.disabled = false;
-                    sqlQueryInput.placeholder = "-- Write SQL Statement here\nSELECT * FROM range(1, 100);";
-                }
-                if (btnExecuteSql) {
-                    btnExecuteSql.disabled = false;
-                    btnExecuteSql.style.opacity = '1';
-                    btnExecuteSql.style.cursor = 'pointer';
+                if (btnTerm) {
+                    btnTerm.disabled = true;
+                    btnTerm.innerHTML = `Terminated`;
                 }
             }
         }
 
-        // Executing statements
+        function switchTab(tabName) {
+            selectedTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.tab-btn');
+            if (tabName === 'console') {
+                buttons[0]?.classList.add('active');
+                document.getElementById('pane-console')?.classList.add('active');
+            } else if (tabName === 'history') {
+                buttons[1]?.classList.add('active');
+                document.getElementById('pane-history')?.classList.add('active');
+                loadStatementHistory();
+            } else if (tabName === 'config') {
+                buttons[2]?.classList.add('active');
+                document.getElementById('pane-config')?.classList.add('active');
+                const sess = allSessions.find(s => s.id === selectedSessionId);
+                if (sess) renderConfig(sess);
+            } else if (tabName === 'logs') {
+                buttons[3]?.classList.add('active');
+                document.getElementById('pane-logs')?.classList.add('active');
+                const sess = allSessions.find(s => s.id === selectedSessionId);
+                if (sess) renderLogs(sess);
+            }
+        }
+
+        function applySqlTemplate(key) {
+            if (!key || !SQL_TEMPLATES[key]) return;
+            const editor = document.getElementById('sql-query-input');
+            if (editor) {
+                editor.value = SQL_TEMPLATES[key];
+                editor.focus();
+            }
+        }
+
+        /* Statement Execution & Cancellation */
         async function executeSQL() {
             const queryInput = document.getElementById('sql-query-input');
+            const tagsInput = document.getElementById('sql-tags-input');
             const sql = queryInput.value.trim();
             if (!sql) return;
 
+            const tags = (tagsInput.value || '')
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t.length > 0);
+
             const btn = document.getElementById('btn-execute-sql');
-            const status = document.getElementById('execute-status');
-            const resultsPane = document.getElementById('console-results');
-            const resultsCount = document.getElementById('results-count');
+            const cancelBtn = document.getElementById('btn-cancel-sql');
+            const statusMsg = document.getElementById('execute-status-msg');
+            const resultsContainer = document.getElementById('console-results-container');
+            const paginationFooter = document.getElementById('pagination-footer');
 
             btn.disabled = true;
-            status.innerHTML = `<span class="loading-spinner" style="vertical-align: middle; margin-right: 0.5rem; width:1rem; height:1rem;"></span> Submitting...`;
-            resultsPane.innerHTML = `<div class="no-data"><span class="loading-spinner"></span> Executing statement on Spark Connect...</div>`;
+            cancelBtn.style.display = 'inline-flex';
+            statusMsg.innerHTML = `<span class="spinner"></span> Submitting statement...`;
+            resultsContainer.innerHTML = `<div class="no-data"><span class="spinner" style="width:1.5rem; height:1.5rem; margin-bottom:0.5rem;"></span><br>Executing query in Apache Spark Connect...</div>`;
+            paginationFooter.style.display = 'none';
 
             try {
                 const res = await fetch(`/sessions/${selectedSessionId}/statements`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: sql })
+                    body: JSON.stringify({ code: sql, tags: tags })
                 });
 
                 if (!res.ok) {
-                    const errObj = await res.json();
-                    throw new Error(errObj.error || "Execution failed");
+                    const err = await res.json();
+                    throw new Error(err.error || "Submission failed");
                 }
 
                 const stmt = await res.json();
+                currentExecutingStmtId = stmt.id;
                 pollStatement(stmt.id);
-
             } catch (err) {
-                status.innerText = "Error";
-                resultsPane.innerHTML = `<div class="no-data" style="color:var(--error); font-family:'JetBrains Mono',monospace;">Execution error: ${err.message}</div>`;
                 btn.disabled = false;
+                cancelBtn.style.display = 'none';
+                statusMsg.innerText = "Execution failed";
+                resultsContainer.innerHTML = `<div class="no-data" style="color:var(--error);">${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function cancelActiveStatement() {
+            if (currentExecutingStmtId === null || selectedSessionId === null) return;
+            try {
+                const statusMsg = document.getElementById('execute-status-msg');
+                statusMsg.innerHTML = `<span class="spinner"></span> Cancelling statement...`;
+                await fetch(`/sessions/${selectedSessionId}/statements/${currentExecutingStmtId}/cancel`, {
+                    method: 'POST'
+                });
+                showToast(`Cancellation requested for statement #${currentExecutingStmtId}`);
+            } catch (err) {
+                showToast(`Failed to cancel: ${err.message}`);
             }
         }
 
         function pollStatement(stmtId) {
-            const btn = document.getElementById('btn-execute-sql');
-            const status = document.getElementById('execute-status');
-            const resultsPane = document.getElementById('console-results');
-            const resultsCount = document.getElementById('results-count');
-
             if (activeStatementPoller) clearInterval(activeStatementPoller);
+
+            const btn = document.getElementById('btn-execute-sql');
+            const cancelBtn = document.getElementById('btn-cancel-sql');
+            const statusMsg = document.getElementById('execute-status-msg');
 
             activeStatementPoller = setInterval(async () => {
                 try {
-                    const res = await fetch(`/sessions/${selectedSessionId}/statements/${stmtId}`);
+                    const res = await fetch(`/sessions/${selectedSessionId}/statements/${stmtId}?from=0&size=${currentStmtPagination.size}`);
                     const stmt = await res.json();
-                    
-                    status.innerHTML = `Statement #${stmtId} is ${stmt.state}...`;
+
+                    statusMsg.innerText = `Statement #${stmtId} (${stmt.state})...`;
 
                     if (stmt.state === 'available') {
                         clearInterval(activeStatementPoller);
                         btn.disabled = false;
-                        status.innerText = `Finished statement #${stmtId}`;
-                        renderQueryResults(stmt.output);
-                        loadSessions(); // refresh logs
+                        cancelBtn.style.display = 'none';
+                        statusMsg.innerText = `Finished statement #${stmtId}`;
+                        currentExecutingStmtId = null;
+
+                        currentStmtPagination.stmtId = stmtId;
+                        currentStmtPagination.from = 0;
+                        renderStatementOutput(stmt.output);
+                        loadSessions(); // refresh logs/activity
+                    } else if (stmt.state === 'cancelled') {
+                        clearInterval(activeStatementPoller);
+                        btn.disabled = false;
+                        cancelBtn.style.display = 'none';
+                        statusMsg.innerText = `Cancelled statement #${stmtId}`;
+                        currentExecutingStmtId = null;
+                        document.getElementById('console-results-container').innerHTML = `
+                            <div class="no-data" style="color:var(--warning);">Statement was cancelled by user.</div>
+                        `;
+                        loadSessions();
                     } else if (stmt.state === 'error') {
                         clearInterval(activeStatementPoller);
                         btn.disabled = false;
-                        status.innerText = `Failed statement #${stmtId}`;
-                        resultsPane.innerHTML = `
-                            <div class="no-data" style="color:var(--error); text-align: left; font-family:'JetBrains Mono',monospace; padding: 1.5rem;">
-                                <strong>Error Name:</strong> ${stmt.output.ename || 'SparkExecutionError'}<br><br>
-                                <strong>Error Message:</strong> ${stmt.output.evalue || 'Unknown exception'}<br><br>
-                                <strong>Traceback:</strong><br>
-                                <pre style="white-space: pre-wrap; font-size:0.8rem; margin-top:0.5rem; color:#f87171;">${(stmt.output.traceback || []).join('\n')}</pre>
+                        cancelBtn.style.display = 'none';
+                        statusMsg.innerText = `Failed statement #${stmtId}`;
+                        currentExecutingStmtId = null;
+
+                        const output = stmt.output || {};
+                        document.getElementById('console-results-container').innerHTML = `
+                            <div style="padding:1.25rem; color:var(--error); font-family:'JetBrains Mono',monospace; font-size:0.8rem;">
+                                <strong style="font-size:0.9rem;">${output.ename || 'AnalysisException'}:</strong> ${escapeHtml(output.evalue || 'Query failed')}<br><br>
+                                <pre style="white-space:pre-wrap; color:#fca5a5; font-size:0.75rem; background:rgba(0,0,0,0.3); padding:0.75rem; border-radius:6px; max-height:260px; overflow-y:auto;">${(output.traceback || []).join('\n')}</pre>
                             </div>
                         `;
-                        loadSessions(); // refresh logs
+                        loadSessions();
                     }
                 } catch (err) {
                     clearInterval(activeStatementPoller);
                     btn.disabled = false;
-                    status.innerText = "Failed polling";
+                    cancelBtn.style.display = 'none';
+                    statusMsg.innerText = "Error polling statement";
                 }
             }, 500);
         }
 
-        function renderQueryResults(output) {
-            const resultsPane = document.getElementById('console-results');
-            const resultsCount = document.getElementById('results-count');
+        // Output Table Rendering & Pagination
+        let lastCachedOutput = null;
 
-            if (output.status !== 'ok' || !output.data || !output.data['application/json']) {
-                resultsPane.innerHTML = `<div class="no-data">Statement executed successfully with no data output.</div>`;
-                resultsCount.innerText = "0 rows";
+        function renderStatementOutput(output) {
+            lastCachedOutput = output;
+            const container = document.getElementById('console-results-container');
+            const countLabel = document.getElementById('results-count-label');
+            const paginationFooter = document.getElementById('pagination-footer');
+
+            if (!output || output.status !== 'ok' || !output.data || !output.data['application/json']) {
+                container.innerHTML = `<div class="no-data">Statement completed successfully with no tabular output.</div>`;
+                countLabel.innerText = "0 rows";
+                paginationFooter.style.display = 'none';
                 return;
             }
 
@@ -1149,19 +1821,30 @@
             const schemaObj = queryResult.schema || {};
             const fields = schemaObj.fields || [];
             const rows = queryResult.data || [];
+            const totalRows = queryResult.total !== undefined ? queryResult.total : rows.length;
+            const from = queryResult.from !== undefined ? queryResult.from : 0;
+            const size = queryResult.size !== undefined ? queryResult.size : rows.length;
 
-            resultsCount.innerText = `${rows.length} rows`;
+            currentStmtPagination.total = totalRows;
+            currentStmtPagination.from = from;
+            countLabel.innerText = `${totalRows} total rows`;
 
             if (rows.length === 0) {
-                resultsPane.innerHTML = `<div class="no-data">Empty result set returned.</div>`;
+                container.innerHTML = `<div class="no-data">Empty result set returned.</div>`;
+                paginationFooter.style.display = 'none';
                 return;
             }
 
             const tableHtml = `
-                <table class="results-table">
+                <table class="spark-table">
                     <thead>
                         <tr>
-                            ${fields.map(f => `<th>${f.name}</th>`).join('')}
+                            ${fields.map(f => `
+                                <th>
+                                    ${escapeHtml(f.name)}
+                                    <span class="col-type-tag">${escapeHtml(f.type || '')}</span>
+                                </th>
+                            `).join('')}
                         </tr>
                     </thead>
                     <tbody>
@@ -1169,17 +1852,96 @@
                             <tr>
                                 ${fields.map((f, i) => {
                                     const val = Array.isArray(row) ? row[i] : row[f.name];
-                                    return `<td>${val !== null && val !== undefined ? escapeHtml(String(val)) : '<span style="color:#4b5563; font-style:italic;">null</span>'}</td>`;
+                                    return `<td>${val !== null && val !== undefined ? escapeHtml(String(val)) : '<span style="color:#64748b; font-style:italic;">null</span>'}</td>`;
                                 }).join('')}
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
             `;
-            resultsPane.innerHTML = tableHtml;
+            container.innerHTML = tableHtml;
+
+            // Update Pagination Bar
+            paginationFooter.style.display = 'flex';
+            const endRow = Math.min(from + rows.length, totalRows);
+            document.getElementById('pagination-summary').innerText = `Showing ${from + 1} - ${endRow} of ${totalRows} rows`;
+
+            document.getElementById('btn-prev-page').disabled = from <= 0;
+            document.getElementById('btn-next-page').disabled = endRow >= totalRows;
         }
 
-        async function loadStatements() {
+        async function fetchPaginatedStatement(stmtId, from, size) {
+            try {
+                const res = await fetch(`/sessions/${selectedSessionId}/statements/${stmtId}?from=${from}&size=${size}`);
+                if (!res.ok) return;
+                const stmt = await res.json();
+                renderStatementOutput(stmt.output);
+            } catch (err) {
+                showToast(`Pagination error: ${err.message}`);
+            }
+        }
+
+        function nextPage() {
+            if (!currentStmtPagination.stmtId) return;
+            const nextFrom = currentStmtPagination.from + currentStmtPagination.size;
+            if (nextFrom < currentStmtPagination.total) {
+                fetchPaginatedStatement(currentStmtPagination.stmtId, nextFrom, currentStmtPagination.size);
+            }
+        }
+
+        function prevPage() {
+            if (!currentStmtPagination.stmtId) return;
+            const prevFrom = Math.max(0, currentStmtPagination.from - currentStmtPagination.size);
+            fetchPaginatedStatement(currentStmtPagination.stmtId, prevFrom, currentStmtPagination.size);
+        }
+
+        function changePageSize(newSize) {
+            currentStmtPagination.size = newSize;
+            if (currentStmtPagination.stmtId !== null) {
+                fetchPaginatedStatement(currentStmtPagination.stmtId, 0, newSize);
+            }
+        }
+
+        function exportResultsCSV() {
+            if (!lastCachedOutput || !lastCachedOutput.data || !lastCachedOutput.data['application/json']) {
+                showToast("No result dataset to export.");
+                return;
+            }
+            const queryResult = lastCachedOutput.data['application/json'];
+            const fields = (queryResult.schema && queryResult.schema.fields) || [];
+            const rows = queryResult.data || [];
+
+            let csv = fields.map(f => `"${f.name.replace(/"/g, '""')}"`).join(',') + '\n';
+            rows.forEach(r => {
+                const line = fields.map((f, i) => {
+                    const val = Array.isArray(r) ? r[i] : r[f.name];
+                    if (val === null || val === undefined) return '""';
+                    return `"${String(val).replace(/"/g, '""')}"`;
+                }).join(',');
+                csv += line + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `query_result_session_${selectedSessionId}_${Date.now()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Exported CSV successfully!");
+        }
+
+        function copyResultsJSON() {
+            if (!lastCachedOutput || !lastCachedOutput.data || !lastCachedOutput.data['application/json']) {
+                showToast("No result dataset to copy.");
+                return;
+            }
+            const queryResult = lastCachedOutput.data['application/json'];
+            copyToClipboard(JSON.stringify(queryResult, null, 2), "Results JSON");
+        }
+
+        /* Statement History Tab */
+        async function loadStatementHistory() {
             const container = document.getElementById('statements-list-container');
             if (!container) return;
 
@@ -1189,50 +1951,169 @@
                 const stmts = data.statements || [];
 
                 if (stmts.length === 0) {
-                    container.innerHTML = `<div class="no-data">No statements executed in this session.</div>`;
+                    container.innerHTML = `<div class="no-data">No statements have been executed in this session yet.</div>`;
                     return;
                 }
 
                 container.innerHTML = stmts.map(s => {
-                    let badgeClass = 'badge-idle';
-                    if (s.state === 'running') badgeClass = 'badge-busy';
-                    if (s.state === 'waiting') badgeClass = 'badge-starting';
-                    if (s.state === 'error') badgeClass = 'badge-dead';
+                    let badge = 'badge-idle';
+                    if (s.state === 'running') badge = 'badge-busy';
+                    if (s.state === 'waiting') badge = 'badge-starting';
+                    if (s.state === 'error' || s.state === 'cancelled') badge = 'badge-dead';
+
+                    const duration = s.completed && s.started ? `${s.completed - s.started} ms` : 'In progress';
+                    const tagsHtml = (s.tags || []).map(t => `<span class="stmt-tag">${escapeHtml(t)}</span>`).join('');
 
                     return `
-                        <div class="statement-item">
-                            <div class="statement-meta">
-                                <span>Statement #${s.id}</span>
-                                <span class="badge ${badgeClass}">${s.state}</span>
+                        <div class="stmt-card">
+                            <div class="stmt-header">
+                                <span style="font-weight:600; color:white;">Statement #${s.id}</span>
+                                <div style="display:flex; gap:0.5rem; align-items:center;">
+                                    ${tagsHtml ? `<div class="stmt-tags-list">${tagsHtml}</div>` : ''}
+                                    <span class="badge ${badge}">${s.state}</span>
+                                </div>
                             </div>
-                            <div class="statement-code">${escapeHtml(s.code)}</div>
-                            <div class="statement-meta" style="margin-bottom:0; font-size:0.75rem;">
-                                <span>Progress: ${(s.progress * 100).toFixed(0)}%</span>
-                                <span>Duration: ${s.completed && s.started ? (s.completed - s.started) : '0'} ms</span>
+                            <div class="stmt-code">${escapeHtml(s.code)}</div>
+                            <div class="stmt-footer">
+                                <span>Duration: <strong style="color:white;">${duration}</strong></span>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <button class="btn btn-secondary btn-sm" onclick="loadStatementInEditor('${encodeURIComponent(s.code)}')">
+                                        Edit in Studio
+                                    </button>
+                                    ${s.state === 'available' ? `
+                                        <button class="btn btn-secondary btn-sm" onclick="viewHistoricalStatement(${s.id})">
+                                            View Output
+                                        </button>
+                                    ` : ''}
+                                    ${s.state === 'running' ? `
+                                        <button class="btn btn-danger btn-sm" onclick="cancelStatementDirect(${s.id})">
+                                            Cancel
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
                         </div>
                     `;
                 }).join('');
-
             } catch (err) {
-                console.error("Failed to load statements list", err);
+                container.innerHTML = `<div class="no-data" style="color:var(--error);">Failed to load statements: ${err.message}</div>`;
             }
         }
 
-        // Sessions creation/deletion
-        async function deleteSession(id) {
-            if (!confirm(`Are you sure you want to terminate Session #${id}?`)) return;
+        function loadStatementInEditor(encodedCode) {
+            const code = decodeURIComponent(encodedCode);
+            switchTab('console');
+            const editor = document.getElementById('sql-query-input');
+            if (editor) {
+                editor.value = code;
+                editor.focus();
+            }
+        }
+
+        async function viewHistoricalStatement(stmtId) {
+            switchTab('console');
+            currentStmtPagination.stmtId = stmtId;
+            currentStmtPagination.from = 0;
+            fetchPaginatedStatement(stmtId, 0, currentStmtPagination.size);
+        }
+
+        async function cancelStatementDirect(stmtId) {
+            try {
+                await fetch(`/sessions/${selectedSessionId}/statements/${stmtId}/cancel`, { method: 'POST' });
+                showToast(`Cancellation requested for statement #${stmtId}`);
+                loadStatementHistory();
+            } catch (err) {
+                showToast(`Cancel failed: ${err.message}`);
+            }
+        }
+
+        /* Config & Logs */
+        function renderConfig(sess) {
+            const container = document.getElementById('config-content');
+            if (!container) return;
+
+            const timeoutMins = sess.idleTimeout > 0 ? `${sess.idleTimeout / 60000}m (${sess.idleTimeout} ms)` : 'Default (Inherited)';
+
+            container.innerHTML = `
+                <div class="config-card">
+                    <h4>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Session Identity
+                    </h4>
+                    <table class="config-table">
+                        <tr><td>Session Numeric ID</td><td>#${sess.id}</td></tr>
+                        <tr><td>Session Name</td><td>${escapeHtml(sess.name || 'N/A')}</td></tr>
+                        <tr><td>Session Kind</td><td>${sess.kind}</td></tr>
+                        <tr><td>User ID</td><td>${escapeHtml(sess.userId || 'N/A')}</td></tr>
+                        <tr><td>Proxy User</td><td>${escapeHtml(sess.proxyUser || 'N/A')}</td></tr>
+                        <tr><td>User Agent</td><td>${escapeHtml(sess.userAgent || 'livy-next')}</td></tr>
+                    </table>
+                </div>
+
+                <div class="config-card">
+                    <h4>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Spark Connect 4.x Runtime
+                    </h4>
+                    <table class="config-table">
+                        <tr><td>Session UUID</td><td style="font-size:0.7rem;">${sess.sessionId || 'N/A'}</td></tr>
+                        <tr><td>Spark App ID</td><td>${sess.appId || 'N/A'}</td></tr>
+                        <tr><td>Idle Timeout</td><td style="color:#10b981;">${timeoutMins}</td></tr>
+                        <tr><td>Last Activity</td><td>${new Date(sess.lastActivity).toLocaleTimeString()}</td></tr>
+                    </table>
+                </div>
+
+                <div class="config-card" style="grid-column: 1 / -1;">
+                    <h4>
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        Spark Connect Deep Links
+                    </h4>
+                    <div style="display:flex; gap:1rem; margin-top:0.5rem; flex-wrap:wrap;">
+                        ${sess.appInfo?.sparkConnectUiUrl ? `
+                            <a href="${formatUiUrl(sess.appInfo.sparkConnectUiUrl)}" target="_blank" class="btn btn-secondary btn-sm" style="border-color:rgba(168,85,247,0.4); color:#d8b4fe;">
+                                Spark Connect Session UI &rarr;
+                            </a>
+                        ` : ''}
+                        ${sess.appInfo?.sparkUiUrl ? `
+                            <a href="${formatUiUrl(sess.appInfo.sparkUiUrl)}" target="_blank" class="btn btn-secondary btn-sm">
+                                Spark Application Web UI &rarr;
+                            </a>
+                        ` : ''}
+                        ${sess.appInfo?.sparkHistoryUrl ? `
+                            <a href="${formatUiUrl(sess.appInfo.sparkHistoryUrl)}" target="_blank" class="btn btn-secondary btn-sm">
+                                Spark History Server &rarr;
+                            </a>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderLogs(sess) {
+            const container = document.getElementById('logs-container');
+            if (!container) return;
+            const lines = sess.log || [];
+            if (lines.length === 0) {
+                container.innerHTML = `<div class="no-data">No log entries available.</div>`;
+                return;
+            }
+            container.innerHTML = lines.map(line => `<div class="terminal-line">${escapeHtml(line)}</div>`).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /* Session Lifecycle Actions */
+        async function terminateSession(id) {
+            if (!confirm(`Are you sure you want to terminate Session #${id}? All Spark Connect resources will be released.`)) return;
             try {
                 const res = await fetch(`/sessions/${id}`, { method: 'DELETE' });
                 if (res.ok) {
-                    selectedSessionId = null;
-                    renderPlaceholder();
+                    showToast(`Session #${id} terminated.`);
                     loadSessions();
                 } else {
-                    alert("Failed to terminate session");
+                    showToast("Failed to terminate session");
                 }
             } catch (err) {
-                console.error(err);
+                showToast(`Error: ${err.message}`);
             }
         }
 
@@ -1240,16 +2121,16 @@
             const overlay = document.getElementById('create-modal-overlay');
             overlay.style.display = 'flex';
             setTimeout(() => overlay.style.opacity = '1', 10);
-            const modal = overlay.querySelector('.modal');
+            const modal = overlay.querySelector('.modal-window');
             modal.style.transform = 'scale(1)';
         }
 
         function closeNewSessionModal() {
             const overlay = document.getElementById('create-modal-overlay');
             overlay.style.opacity = '0';
-            const modal = overlay.querySelector('.modal');
+            const modal = overlay.querySelector('.modal-window');
             modal.style.transform = 'scale(0.95)';
-            setTimeout(() => overlay.style.display = 'none', 250);
+            setTimeout(() => overlay.style.display = 'none', 200);
         }
 
         async function submitCreateSession() {
@@ -1259,14 +2140,29 @@
             const proxyUser = document.getElementById('proxy-user').value.trim();
             const sessionId = document.getElementById('session-id').value.trim();
             const userAgent = document.getElementById('user-agent').value.trim();
+            const confRaw = document.getElementById('session-conf').value.trim();
 
-            closeNewSessionModal();
+            let conf = {};
+            if (confRaw) {
+                try {
+                    conf = JSON.parse(confRaw);
+                } catch (e) {
+                    alert("Invalid JSON format in custom Spark configurations.");
+                    return;
+                }
+            }
+
+            const btn = document.getElementById('btn-submit-session');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner"></span> Creating...`;
+
             try {
                 const payload = { kind, name };
                 if (userId) payload.userId = userId;
                 if (proxyUser) payload.proxyUser = proxyUser;
                 if (sessionId) payload.sessionId = sessionId;
                 if (userAgent) payload.userAgent = userAgent;
+                if (Object.keys(conf).length > 0) payload.conf = conf;
 
                 const res = await fetch('/sessions', {
                     method: 'POST',
@@ -1276,7 +2172,9 @@
 
                 if (res.ok) {
                     const sess = await res.json();
-                    loadSessions();
+                    closeNewSessionModal();
+                    showToast(`Created Session #${sess.id} (${sess.sessionId ? sess.sessionId.substring(0,8) : ''})`);
+                    await loadSessions();
                     selectSession(sess.id);
                 } else {
                     const err = await res.json();
@@ -1284,11 +2182,15 @@
                 }
             } catch (err) {
                 alert("Failed to create session: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Create Session`;
             }
         }
 
         function escapeHtml(str) {
-            return str
+            if (!str) return '';
+            return String(str)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
