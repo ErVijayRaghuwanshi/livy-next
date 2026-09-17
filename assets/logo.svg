@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="lnBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0e1322"/>
+      <stop offset="100%" stop-color="#060913"/>
+    </linearGradient>
+
+    <!-- Border Glow Gradient -->
+    <linearGradient id="lnBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#6366f1"/>
+      <stop offset="80%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#f43f5e"/>
+    </linearGradient>
+
+    <!-- Left L-Arm Gradient -->
+    <linearGradient id="lnArmL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+
+    <!-- Right Chevron Next (>) Gradient -->
+    <linearGradient id="lnNext" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="40%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#fb923c"/>
+    </linearGradient>
+
+    <!-- Center Spark Flame & Lightning -->
+    <linearGradient id="lnSpark" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fef08a"/>
+    </linearGradient>
+
+    <!-- Drop Shadow / Glow Filter -->
+    <filter id="lnGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#lnBg)" stroke="url(#lnBorder)" stroke-width="2.5"/>
+
+  <!-- Network Constellation Connection Grid -->
+  <g opacity="0.3" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="2 3">
+    <line x1="20" y1="28" x2="42" y2="20"/>
+    <line x1="80" y1="30" x2="55" y2="46"/>
+    <line x1="24" y1="76" x2="48" y2="62"/>
+    <line x1="76" y1="74" x2="56" y2="54"/>
+  </g>
+
+  <!-- Constellation Nodes -->
+  <circle cx="20" cy="28" r="3" fill="#38bdf8" opacity="0.85"/>
+  <circle cx="80" cy="30" r="3" fill="#fb923c" opacity="0.85"/>
+  <circle cx="24" cy="76" r="2.5" fill="#818cf8" opacity="0.75"/>
+  <circle cx="76" cy="74" r="3" fill="#f43f5e" opacity="0.85"/>
+
+  <!-- Left 'L' Arm -->
+  <path d="M26 20 C26 17.8 27.8 16 30 16 L36 16 C38.2 16 40 17.8 40 20 L40 62 C40 63.1 40.9 64 42 64 L64 64 C66.2 64 68 65.8 68 68 L68 72 C68 74.2 66.2 76 64 76 L30 76 C27.8 76 26 74.2 26 72 Z" fill="url(#lnArmL)" filter="url(#lnGlow)"/>
+
+  <!-- Right Forward Chevron '>' (Next) -->
+  <path d="M52 24 C50.5 22.5 50.5 20 52 18.5 L55 15.5 C56.5 14 59 14 60.5 15.5 L79 34 C80.5 35.5 80.5 38 79 39.5 L60.5 58 C59 59.5 56.5 59.5 55 58 L52 55 C50.5 53.5 50.5 51 52 49.5 L65 36.8 Z" fill="url(#lnNext)" filter="url(#lnGlow)"/>
+
+  <!-- Central Spark Energy Core (Lightning Bolt & Flame) -->
+  <g filter="url(#lnGlow)">
+    <path d="M50 36 L43 50 L51 50 L45 66 L59 48 L49 48 Z" fill="url(#lnSpark)"/>
+    <circle cx="49" cy="49" r="2.5" fill="#ffffff"/>
+  </g>
+</svg>

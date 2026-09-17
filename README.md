@@ -1,3 +1,20 @@
+<p align="center">
+  <img src="assets/logo-banner.svg" alt="Livy-Next Logo Banner" width="650"/>
+</p>
+
+<p align="center">
+  <strong>High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Apache%20Spark-4.x%20Connect-blue?style=flat-square" alt="Spark 4.x Connect"/>
+  <img src="https://img.shields.io/badge/Runtime-Go%201.24-00ADD8?style=flat-square&logo=go" alt="Go"/>
+  <img src="https://img.shields.io/badge/Footprint-Zero%20JVM-success?style=flat-square" alt="Zero JVM"/>
+  <img src="https://img.shields.io/badge/API-Swagger%202.0-85EA2D?style=flat-square&logo=swagger" alt="Swagger"/>
+</p>
+
+---
+
 # Livy-Next 🚀
 
 `livy-next` is a modern, lightweight, high-performance Apache Livy successor written in Go. It acts as an interactive REST API gateway for modern **Spark 4.x** clusters by translating traditional Livy-compatible REST requests into gRPC calls over the **Spark Connect** protocol.

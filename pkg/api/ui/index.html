@@ -3,7 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livy-Next — Apache Spark Connect Dashboard</title>
+
+    <!-- Primary Meta Tags & SEO -->
+    <title>Livy-Next — High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect</title>
+    <meta name="title" content="Livy-Next — High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect">
+    <meta name="description" content="Livy-Next is a modern, cloud-native Go gateway for Apache Spark 4.x Connect. Zero JVM overhead, sub-second statement routing, dynamic session lifecycle controls, interactive SQL Studio, and native timeout synchronization.">
+    <meta name="keywords" content="Apache Spark, Spark Connect, Livy, Livy-Next, Spark 4.x, Big Data, SQL Studio, Golang, Data Engineering, PySpark, Cloud Native, Spark Gateway">
+    <meta name="author" content="Vijay Raghuwanshi & Livy-Next Contributors">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0a0d16">
+    <meta name="color-scheme" content="dark">
+
+    <!-- Open Graph / Facebook / LinkedIn -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://github.com/ErVijayRaghuwanshi/livy-next">
+    <meta property="og:title" content="Livy-Next — High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect">
+    <meta property="og:description" content="Cloud-native Go gateway for Apache Spark Connect. Zero JVM footprint, high concurrency, interactive SQL Studio, and unified cluster lifecycle management.">
+    <meta property="og:site_name" content="Livy-Next">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://github.com/ErVijayRaghuwanshi/livy-next">
+    <meta name="twitter:title" content="Livy-Next — Apache Spark 4.x Connect Gateway & Dashboard">
+    <meta name="twitter:description" content="Next-generation Go runtime for Apache Spark Connect. Real-time SQL execution, automated timeout synchronization, and session lifecycle controls.">
+
+    <!-- Mobile & PWA Web App -->
+    <meta name="application-name" content="Livy-Next">
+    <meta name="apple-mobile-web-app-title" content="Livy-Next">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- Favicon & Touch Icons (Self-Contained Scalable SVG) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%230e1322'/%3E%3Cstop offset='100%25' stop-color='%23060913'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2338bdf8'/%3E%3Cstop offset='40%25' stop-color='%236366f1'/%3E%3Cstop offset='80%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%23f43f5e'/%3E%3C/linearGradient%3E%3ClinearGradient id='l' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2338bdf8'/%3E%3Cstop offset='50%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3ClinearGradient id='n' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23c084fc'/%3E%3Cstop offset='40%25' stop-color='%23f43f5e'/%3E%3Cstop offset='100%25' stop-color='%23fb923c'/%3E%3C/linearGradient%3E%3ClinearGradient id='s' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%2322d3ee'/%3E%3Cstop offset='50%25' stop-color='%23ffffff'/%3E%3Cstop offset='100%25' stop-color='%23fef08a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='92' height='92' rx='24' fill='url(%23bg)' stroke='url(%23b)' stroke-width='2.5'/%3E%3Ccircle cx='20' cy='28' r='3' fill='%2338bdf8' opacity='0.85'/%3E%3Ccircle cx='80' cy='30' r='3' fill='%23fb923c' opacity='0.85'/%3E%3Ccircle cx='76' cy='74' r='3' fill='%23f43f5e' opacity='0.85'/%3E%3Cpath d='M26 20 C26 17.8 27.8 16 30 16 L36 16 C38.2 16 40 17.8 40 20 L40 62 C40 63.1 40.9 64 42 64 L64 64 C66.2 64 68 65.8 68 68 L68 72 C68 74.2 66.2 76 64 76 L30 76 C27.8 76 26 74.2 26 72 Z' fill='url(%23l)'/%3E%3Cpath d='M52 24 C50.5 22.5 50.5 20 52 18.5 L55 15.5 C56.5 14 59 14 60.5 15.5 L79 34 C80.5 35.5 80.5 38 79 39.5 L60.5 58 C59 59.5 56.5 59.5 55 58 L52 55 C50.5 53.5 50.5 51 52 49.5 L65 36.8 Z' fill='url(%23n)'/%3E%3Cpath d='M50 36 L43 50 L51 50 L45 66 L59 48 L49 48 Z' fill='url(%23s)'/%3E%3Ccircle cx='49' cy='49' r='2.5' fill='%23ffffff'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%230e1322'/%3E%3Cstop offset='100%25' stop-color='%23060913'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2338bdf8'/%3E%3Cstop offset='40%25' stop-color='%236366f1'/%3E%3Cstop offset='80%25' stop-color='%23a855f7'/%3E%3Cstop offset='100%25' stop-color='%23f43f5e'/%3E%3C/linearGradient%3E%3ClinearGradient id='l' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2338bdf8'/%3E%3Cstop offset='50%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3ClinearGradient id='n' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23c084fc'/%3E%3Cstop offset='40%25' stop-color='%23f43f5e'/%3E%3Cstop offset='100%25' stop-color='%23fb923c'/%3E%3C/linearGradient%3E%3ClinearGradient id='s' x1='0%25' y1='100%25' x2='100%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%2322d3ee'/%3E%3Cstop offset='50%25' stop-color='%23ffffff'/%3E%3Cstop offset='100%25' stop-color='%23fef08a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='92' height='92' rx='24' fill='url(%23bg)' stroke='url(%23b)' stroke-width='2.5'/%3E%3Cpath d='M26 20 C26 17.8 27.8 16 30 16 L36 16 C38.2 16 40 17.8 40 20 L40 62 C40 63.1 40.9 64 42 64 L64 64 C66.2 64 68 65.8 68 68 L68 72 C68 74.2 66.2 76 64 76 L30 76 C27.8 76 26 74.2 26 72 Z' fill='url(%23l)'/%3E%3Cpath d='M52 24 C50.5 22.5 50.5 20 52 18.5 L55 15.5 C56.5 14 59 14 60.5 15.5 L79 34 C80.5 35.5 80.5 38 79 39.5 L60.5 58 C59 59.5 56.5 59.5 55 58 L52 55 C50.5 53.5 50.5 51 52 49.5 L65 36.8 Z' fill='url(%23n)'/%3E%3Cpath d='M50 36 L43 50 L51 50 L45 66 L59 48 L49 48 Z' fill='url(%23s)'/%3E%3Ccircle cx='49' cy='49' r='2.5' fill='%23ffffff'/%3E%3C/svg%3E">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -124,18 +159,25 @@
         }
 
         .logo-box {
-            width: 2.25rem;
-            height: 2.25rem;
-            background: var(--primary-gradient);
-            border-radius: 9px;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-            font-weight: 800;
-            font-size: 1.25rem;
-            color: white;
-            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 3px;
+        }
+
+        .logo-box:hover {
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 0 28px rgba(168, 85, 247, 0.55);
+            transform: scale(1.06);
         }
 
         .brand-title {
@@ -1102,7 +1144,51 @@
     <!-- Header -->
     <header>
         <div class="brand-group">
-            <div class="logo-box">L</div>
+            <div class="logo-box" title="Livy-Next — Cloud-Native Gateway for Apache Spark 4.x Connect">
+                <svg viewBox="0 0 100 100" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="lnArmL" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#38bdf8"/>
+                            <stop offset="50%" stop-color="#6366f1"/>
+                            <stop offset="100%" stop-color="#8b5cf6"/>
+                        </linearGradient>
+                        <linearGradient id="lnNext" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#c084fc"/>
+                            <stop offset="40%" stop-color="#f43f5e"/>
+                            <stop offset="100%" stop-color="#fb923c"/>
+                        </linearGradient>
+                        <linearGradient id="lnSpark" x1="0%" y1="100%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#22d3ee"/>
+                            <stop offset="50%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#fef08a"/>
+                        </linearGradient>
+                        <filter id="lnGlowHeader" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                        </filter>
+                    </defs>
+                    <!-- Constellation Grid -->
+                    <g opacity="0.35" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="2 3">
+                        <line x1="20" y1="28" x2="42" y2="20"/>
+                        <line x1="80" y1="30" x2="55" y2="46"/>
+                        <line x1="24" y1="76" x2="48" y2="62"/>
+                        <line x1="76" y1="74" x2="56" y2="54"/>
+                    </g>
+                    <circle cx="20" cy="28" r="3" fill="#38bdf8" opacity="0.9"/>
+                    <circle cx="80" cy="30" r="3" fill="#fb923c" opacity="0.9"/>
+                    <circle cx="24" cy="76" r="2.5" fill="#818cf8" opacity="0.8"/>
+                    <circle cx="76" cy="74" r="3" fill="#f43f5e" opacity="0.9"/>
+                    <!-- Left 'L' Arm -->
+                    <path d="M26 20 C26 17.8 27.8 16 30 16 L36 16 C38.2 16 40 17.8 40 20 L40 62 C40 63.1 40.9 64 42 64 L64 64 C66.2 64 68 65.8 68 68 L68 72 C68 74.2 66.2 76 64 76 L30 76 C27.8 76 26 74.2 26 72 Z" fill="url(#lnArmL)" filter="url(#lnGlowHeader)"/>
+                    <!-- Right Forward Chevron '>' (Next) -->
+                    <path d="M52 24 C50.5 22.5 50.5 20 52 18.5 L55 15.5 C56.5 14 59 14 60.5 15.5 L79 34 C80.5 35.5 80.5 38 79 39.5 L60.5 58 C59 59.5 56.5 59.5 55 58 L52 55 C50.5 53.5 50.5 51 52 49.5 L65 36.8 Z" fill="url(#lnNext)" filter="url(#lnGlowHeader)"/>
+                    <!-- Central Spark Energy Core (Lightning Bolt & Flame) -->
+                    <g filter="url(#lnGlowHeader)">
+                        <path d="M50 36 L43 50 L51 50 L45 66 L59 48 L49 48 Z" fill="url(#lnSpark)"/>
+                        <circle cx="49" cy="49" r="2.5" fill="#ffffff"/>
+                    </g>
+                </svg>
+            </div>
             <div>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <span class="brand-title">LIVY-NEXT</span>
