@@ -2,6 +2,8 @@ package spark
 
 import (
 	"context"
+	"time"
+
 	"livy-next/pkg/session"
 )
 
@@ -9,6 +11,7 @@ import (
 type MockClient struct {
 	AppName   string
 	SessionID string
+	Timeout   time.Duration
 }
 
 func (m *MockClient) ExecuteSQL(ctx context.Context, sql string) (*session.QueryResult, error) {
@@ -35,6 +38,10 @@ func (m *MockClient) GetAppID(ctx context.Context) (string, error) {
 		return "mock-app-id-" + m.AppName, nil
 	}
 	return "mock-app-id-default", nil
+}
+
+func (m *MockClient) GetSessionTimeout(ctx context.Context) (time.Duration, error) {
+	return m.Timeout, nil
 }
 
 func (m *MockClient) GetSessionID() string {

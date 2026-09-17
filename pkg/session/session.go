@@ -36,6 +36,7 @@ type SparkClient interface {
 	ExecuteSQL(ctx context.Context, sql string) (*QueryResult, error)
 	GetAppID(ctx context.Context) (string, error)
 	GetSessionID() string
+	GetSessionTimeout(ctx context.Context) (time.Duration, error)
 	SetConfig(ctx context.Context, key string, value string) error
 	Close() error
 }
@@ -150,10 +151,13 @@ type Session struct {
 	Statements   []*Statement      `json:"-"`
 	// LastActivity timestamp of the most recent operation
 	LastActivity time.Time         `json:"lastActivity"`
+	// IdleTimeout is the session-specific idle timeout threshold in milliseconds (0 if using manager default)
+	IdleTimeout  int64             `json:"idleTimeout,omitempty" example:"7200000"`
 
-	client  SparkClient
-	mu      sync.RWMutex
-	closeCh chan struct{}
+	idleTimeoutDuration time.Duration
+	client              SparkClient
+	mu                  sync.RWMutex
+	closeCh             chan struct{}
 }
 
 // NewSession creates and initializes a new Session.
@@ -219,6 +223,27 @@ func (s *Session) GetLogs() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.Log
+}
+
+// SetIdleTimeout sets a custom idle timeout for this session.
+func (s *Session) SetIdleTimeout(d time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.idleTimeoutDuration = d
+	if d > 0 {
+		s.IdleTimeout = d.Milliseconds()
+	} else if d < 0 {
+		s.IdleTimeout = -1
+	} else {
+		s.IdleTimeout = 0
+	}
+}
+
+// GetIdleTimeout returns the custom idle timeout for this session.
+func (s *Session) GetIdleTimeout() time.Duration {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.idleTimeoutDuration
 }
 
 // Close closes the session's Spark Connect connection.

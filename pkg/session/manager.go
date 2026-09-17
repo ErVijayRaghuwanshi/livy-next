@@ -97,6 +97,13 @@ func (m *Manager) GetIdleTimeout() time.Duration {
 	return m.idleTimeout
 }
 
+// SetIdleTimeout updates the configured default idle timeout.
+func (m *Manager) SetIdleTimeout(d time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.idleTimeout = d
+}
+
 // GetDeadTimeout returns the configured dead session retention timeout.
 func (m *Manager) GetDeadTimeout() time.Duration {
 	m.mu.RLock()
@@ -173,7 +180,11 @@ func (m *Manager) cleanupIdleSessions() {
 		} else {
 			// Clean up starting or idle sessions after idleTimeout
 			shouldCleanup := sess.State == SessionIdle || sess.State == SessionStarting
-			if m.idleTimeout > 0 && shouldCleanup && now.Sub(sess.LastActivity) > m.idleTimeout {
+			effectiveTimeout := sess.GetIdleTimeout()
+			if effectiveTimeout == 0 {
+				effectiveTimeout = m.idleTimeout
+			}
+			if effectiveTimeout > 0 && shouldCleanup && now.Sub(sess.LastActivity) > effectiveTimeout {
 				toDelete = append(toDelete, id)
 			}
 		}

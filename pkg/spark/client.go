@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -66,6 +69,62 @@ func (c *Client) ExecuteSQL(ctx context.Context, sqlQuery string) (*session.Quer
 
 func (c *Client) GetAppID(ctx context.Context) (string, error) {
 	return c.session.Config().Get(ctx, "spark.app.id")
+}
+
+// GetSessionTimeout fetches the server-side idle session timeout from Spark Connect.
+// Returns parsed time.Duration, or error if not configured or query fails.
+func (c *Client) GetSessionTimeout(ctx context.Context) (time.Duration, error) {
+	val, err := c.session.Config().Get(ctx, "spark.connect.session.manager.defaultSessionTimeout")
+	if err != nil {
+		return 0, err
+	}
+	return ParseSparkDuration(val)
+}
+
+// GetMaintenanceInterval fetches the session maintenance reap interval from Spark Connect.
+func (c *Client) GetMaintenanceInterval(ctx context.Context) (time.Duration, error) {
+	val, err := c.session.Config().Get(ctx, "spark.connect.session.manager.maintenanceInterval")
+	if err != nil {
+		return 0, err
+	}
+	return ParseSparkDuration(val)
+}
+
+var dayRegex = regexp.MustCompile(`^([0-9]+(?:\.[0-9]+)?)d$`)
+
+// ParseSparkDuration parses duration strings accepted by Apache Spark.
+// Supports units like "120m", "2h", "30s", "500ms", "1d", "2.5d".
+// Returns -1ns for disabled timeouts ("-1", "-1ms", "-1s", "-1m").
+func ParseSparkDuration(s string) (time.Duration, error) {
+	s = strings.TrimSpace(strings.ToLower(s))
+	if s == "" {
+		return 0, fmt.Errorf("empty duration string")
+	}
+	if s == "-1" || s == "-1ms" || s == "-1s" || s == "-1m" {
+		return -1 * time.Nanosecond, nil
+	}
+
+	// Handle day unit "d", e.g., "1d", "7d", "0.5d"
+	if matches := dayRegex.FindStringSubmatch(s); len(matches) == 2 {
+		days, err := strconv.ParseFloat(matches[1], 64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse days in %q: %w", s, err)
+		}
+		return time.Duration(days * 24 * float64(time.Hour)), nil
+	}
+
+	// Standard Go time.ParseDuration (supports ns, us, µs, ms, s, m, h)
+	d, err := time.ParseDuration(s)
+	if err == nil {
+		return d, nil
+	}
+
+	// Fallback for pure numeric strings without unit: treat as milliseconds
+	if val, errNum := strconv.ParseInt(s, 10, 64); errNum == nil {
+		return time.Duration(val) * time.Millisecond, nil
+	}
+
+	return 0, fmt.Errorf("invalid spark duration %q: %w", s, err)
 }
 
 func (c *Client) GetSessionID() string {

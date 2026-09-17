@@ -45,6 +45,10 @@ func (d *dummySparkClient) GetAppID(ctx context.Context) (string, error) {
 	return "app-12345", nil
 }
 
+func (d *dummySparkClient) GetSessionTimeout(ctx context.Context) (time.Duration, error) {
+	return 2 * time.Hour, nil
+}
+
 func (d *dummySparkClient) GetSessionID() string {
 	return "sess-uuid-12345"
 }
@@ -145,4 +149,30 @@ func TestSession_CancellationForwarding(t *testing.T) {
 
 	finalStmt, _ := sess.GetStatement(stmt.ID, 0, 0)
 	assert.Equal(t, session.StatementCancelled, finalStmt.State)
+}
+
+func TestSession_IdleTimeoutManagement(t *testing.T) {
+	client := &dummySparkClient{}
+	sess := session.NewSession(4, session.SessionCreateParams{}, client)
+
+	// Initially 0
+	assert.Equal(t, time.Duration(0), sess.GetIdleTimeout())
+	assert.Equal(t, int64(0), sess.IdleTimeout)
+
+	// Set 2 hours
+	sess.SetIdleTimeout(2 * time.Hour)
+	assert.Equal(t, 2*time.Hour, sess.GetIdleTimeout())
+	assert.Equal(t, int64(7200000), sess.IdleTimeout)
+
+	// Set -1 (disabled)
+	sess.SetIdleTimeout(-1 * time.Nanosecond)
+	assert.Equal(t, -1*time.Nanosecond, sess.GetIdleTimeout())
+	assert.Equal(t, int64(-1), sess.IdleTimeout)
+
+	// Test Manager timeout getter and setter
+	mgr := session.NewManager(30*time.Minute, 5*time.Minute)
+	assert.Equal(t, 30*time.Minute, mgr.GetIdleTimeout())
+
+	mgr.SetIdleTimeout(2 * time.Hour)
+	assert.Equal(t, 2*time.Hour, mgr.GetIdleTimeout())
 }

@@ -563,6 +563,11 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 0
                 },
+                "idleTimeout": {
+                    "description": "IdleTimeout is the session-specific idle timeout threshold in milliseconds (0 if using manager default)",
+                    "type": "integer",
+                    "example": 7200000
+                },
                 "kind": {
                     "description": "Kind of session: \"spark\", \"pyspark\", or \"sparkr\"",
                     "type": "string",

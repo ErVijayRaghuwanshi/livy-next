@@ -83,6 +83,7 @@ func main() {
 	defaultStatementLimit := flag.Int("default-statement-limit", 10000, "Default maximum rows returned by SQL statements (0 for unlimited)")
 	idleTimeout := flag.Duration("idle-timeout", 30*time.Minute, "Session idle timeout")
 	deadTimeout := flag.Duration("dead-timeout", 5*time.Minute, "Session dead/stopped retention duration in history")
+	syncSessionTimeout := flag.Bool("sync-session-timeout", true, "Synchronize session idle timeout with Spark Connect server")
 	corsAllowedOrigins := flag.String("cors-allowed-origins", "*", "Comma-separated list of allowed CORS origins")
 	mockMode := flag.Bool("mock", false, "Use in-memory mock Spark client for testing without a real Spark cluster")
 	flag.Parse()
@@ -93,6 +94,7 @@ func main() {
 	log.Printf("CORS allowed origins: %s", *corsAllowedOrigins)
 	log.Printf("Mock mode: %v", *mockMode)
 	log.Printf("Dead session retention timeout: %s", *deadTimeout)
+	log.Printf("Sync session timeout with Spark Connect: %v", *syncSessionTimeout)
 
 	// 1. Initialize session manager
 	manager := session.NewManager(*idleTimeout, *deadTimeout)
@@ -142,8 +144,12 @@ func main() {
 		for k, v := range params.Conf {
 			log.Printf("Setting config %s = %s", k, v)
 			if err := client.SetConfig(ctx, k, v); err != nil {
-				client.Close()
-				return nil, fmt.Errorf("failed to set config %s: %w", k, err)
+				if strings.Contains(err.Error(), "CANNOT_MODIFY_STATIC_CONFIG") {
+					log.Printf("Warning: configuration %s is static on Spark Connect server and cannot be modified dynamically: %v", k, err)
+				} else {
+					client.Close()
+					return nil, fmt.Errorf("failed to set config %s: %w", k, err)
+				}
 			}
 		}
 
@@ -165,7 +171,7 @@ func main() {
 		origins[i] = strings.TrimSpace(origins[i])
 	}
 
-	handler := api.NewHandler(manager, creator, *sparkUIUrl, *sparkHistoryUrl)
+	handler := api.NewHandler(manager, creator, *sparkUIUrl, *sparkHistoryUrl, *syncSessionTimeout)
 	router := api.SetupRouter(handler, origins)
 
 	// 4. Start HTTP Server with Graceful Shutdown

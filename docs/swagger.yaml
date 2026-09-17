@@ -131,6 +131,11 @@ definitions:
         description: ID is the numeric session identifier
         example: 0
         type: integer
+      idleTimeout:
+        description: IdleTimeout is the session-specific idle timeout threshold in
+          milliseconds (0 if using manager default)
+        example: 7200000
+        type: integer
       kind:
         description: 'Kind of session: "spark", "pyspark", or "sparkr"'
         example: spark

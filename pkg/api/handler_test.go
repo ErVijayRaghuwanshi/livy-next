@@ -17,10 +17,11 @@ import (
 
 // MockSparkClient implements session.SparkClient for testing purposes.
 type MockSparkClient struct {
-	ExecuteFunc   func(ctx context.Context, sql string) (*session.QueryResult, error)
-	CloseFunc     func() error
-	GetAppIDFunc  func(ctx context.Context) (string, error)
-	SetConfigFunc func(ctx context.Context, key string, value string) error
+	ExecuteFunc           func(ctx context.Context, sql string) (*session.QueryResult, error)
+	CloseFunc             func() error
+	GetAppIDFunc          func(ctx context.Context) (string, error)
+	GetSessionTimeoutFunc func(ctx context.Context) (time.Duration, error)
+	SetConfigFunc         func(ctx context.Context, key string, value string) error
 }
 
 func (m *MockSparkClient) ExecuteSQL(ctx context.Context, sql string) (*session.QueryResult, error) {
@@ -38,6 +39,13 @@ func (m *MockSparkClient) GetAppID(ctx context.Context) (string, error) {
 		return m.GetAppIDFunc(ctx)
 	}
 	return "mock-app-id-1234", nil
+}
+
+func (m *MockSparkClient) GetSessionTimeout(ctx context.Context) (time.Duration, error) {
+	if m.GetSessionTimeoutFunc != nil {
+		return m.GetSessionTimeoutFunc(ctx)
+	}
+	return 0, nil
 }
 
 func (m *MockSparkClient) GetSessionID() string {
@@ -277,4 +285,51 @@ func TestLivyAPI(t *testing.T) {
 	err = json.Unmarshal(rr.Body.Bytes(), &uuidLookupSess)
 	assert.NoError(t, err)
 	assert.Equal(t, uuidSessionID, uuidLookupSess.SessionID)
+}
+
+func TestCreateSession_InheritSparkTimeout(t *testing.T) {
+	mgr := session.NewManager(30*time.Minute, 5*time.Minute)
+	mockClient := &MockSparkClient{
+		GetSessionTimeoutFunc: func(ctx context.Context) (time.Duration, error) {
+			return 2 * time.Hour, nil
+		},
+	}
+	creator := func(params session.SessionCreateParams) (session.SparkClient, error) {
+		return mockClient, nil
+	}
+
+	h := api.NewHandler(mgr, creator, "http://spark-ui:4040", "http://spark-history:18088", true)
+	router := api.SetupRouter(h, []string{"*"})
+
+	// Initially manager idle timeout is 30m
+	assert.Equal(t, 30*time.Minute, mgr.GetIdleTimeout())
+
+	// Create a session
+	body := []byte(`{"name": "timeout-test-session"}`)
+	req, _ := http.NewRequest("POST", "/sessions", bytes.NewBuffer(body))
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusCreated, rr.Code)
+
+	var createdSess session.Session
+	err := json.Unmarshal(rr.Body.Bytes(), &createdSess)
+	assert.NoError(t, err)
+
+	// Verify session inherited 2 hours (7200000 ms)
+	assert.Equal(t, int64(7200000), createdSess.IdleTimeout)
+
+	// Verify manager idle timeout was synced to 2 hours
+	assert.Equal(t, 2*time.Hour, mgr.GetIdleTimeout())
+
+	// Verify GET /sessions reflects the synced timeout
+	req, _ = http.NewRequest("GET", "/sessions", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var listResp api.SessionsResponse
+	err = json.Unmarshal(rr.Body.Bytes(), &listResp)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(7200000), listResp.IdleTimeout)
 }

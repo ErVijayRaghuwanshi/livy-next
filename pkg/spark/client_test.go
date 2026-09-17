@@ -234,3 +234,38 @@ func TestEmptyArrowTableToQueryResult(t *testing.T) {
 	assert.Empty(t, res.Data)
 }
 
+func TestParseSparkDuration(t *testing.T) {
+	tests := []struct {
+		input       string
+		expected    time.Duration
+		expectError bool
+	}{
+		{"120m", 2 * time.Hour, false},
+		{"60m", 1 * time.Hour, false},
+		{"2h", 2 * time.Hour, false},
+		{"30s", 30 * time.Second, false},
+		{"500ms", 500 * time.Millisecond, false},
+		{"1d", 24 * time.Hour, false},
+		{"2.5d", 60 * time.Hour, false},
+		{"-1", -1 * time.Nanosecond, false},
+		{"-1ms", -1 * time.Nanosecond, false},
+		{"-1s", -1 * time.Nanosecond, false},
+		{"-1m", -1 * time.Nanosecond, false},
+		{"60000", 60 * time.Second, false},
+		{"", 0, true},
+		{"invalid-duration", 0, true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			d, err := ParseSparkDuration(tc.input)
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expected, d)
+			}
+		})
+	}
+}
+

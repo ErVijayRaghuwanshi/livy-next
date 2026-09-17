@@ -15,19 +15,25 @@ import (
 type ClientCreator func(params session.SessionCreateParams) (session.SparkClient, error)
 
 type Handler struct {
-	manager         *session.Manager
-	createClient    ClientCreator
-	sparkUIUrl      string
-	sparkHistoryUrl string
+	manager            *session.Manager
+	createClient       ClientCreator
+	sparkUIUrl         string
+	sparkHistoryUrl    string
+	syncSessionTimeout bool
 }
 
 // NewHandler creates a new REST API Handler.
-func NewHandler(manager *session.Manager, createClient ClientCreator, sparkUIUrl string, sparkHistoryUrl string) *Handler {
+func NewHandler(manager *session.Manager, createClient ClientCreator, sparkUIUrl string, sparkHistoryUrl string, syncSessionTimeout ...bool) *Handler {
+	syncTimeout := true
+	if len(syncSessionTimeout) > 0 {
+		syncTimeout = syncSessionTimeout[0]
+	}
 	return &Handler{
-		manager:         manager,
-		createClient:    createClient,
-		sparkUIUrl:      sparkUIUrl,
-		sparkHistoryUrl: sparkHistoryUrl,
+		manager:            manager,
+		createClient:       createClient,
+		sparkUIUrl:         sparkUIUrl,
+		sparkHistoryUrl:    sparkHistoryUrl,
+		syncSessionTimeout: syncTimeout,
 	}
 }
 
@@ -194,6 +200,19 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 
 	// Populate AppInfo with sparkAppId, live Spark UI link, Spark Connect UI link, and history link
 	sess.SetAppInfo(appId, h.sparkUIUrl, h.sparkHistoryUrl)
+
+	// Inherit server-side session timeout from Spark Connect
+	if remoteTimeout, err := client.GetSessionTimeout(ctx); err == nil {
+		if remoteTimeout > 0 {
+			sess.SetIdleTimeout(remoteTimeout)
+			if h.syncSessionTimeout {
+				h.manager.SetIdleTimeout(remoteTimeout)
+			}
+		} else if remoteTimeout < 0 {
+			// Negative indicates timeout disabled on Spark Connect server
+			sess.SetIdleTimeout(-1)
+		}
+	}
 
 	respondJSON(w, http.StatusCreated, sess)
 }
