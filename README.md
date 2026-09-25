@@ -59,9 +59,22 @@ This allows legacy notebook tools, workflow orchestrators (such as Apache Airflo
      --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
    ```
 
-### Building & Running
+### Quickstart with Docker (Recommended)
 
-A `Makefile` is provided to compile, tidy, test, and run the service.
+Run the all-in-one container with embedded Spark 4.1.2 Connect Server and Livy-Next REST gateway in seconds:
+
+```bash
+docker run -d \
+  --name livy-next \
+  -p 8998:8998 \
+  -p 4141:4040 \
+  ghcr.io/ervijayraghuwanshi/livy-next:v1.0.0
+```
+
+- **Livy-Next REST API / UI**: `http://localhost:8998` / `http://localhost:8998/ui`
+- **Spark Connect Server Web UI**: `http://localhost:4141` (mapped to Spark's internal port `4040`)
+
+### Building & Running Locally
 
 1. **Initialize and download dependencies**:
    ```bash
