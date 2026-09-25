@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary Meta Tags & SEO -->
+  <title>Livy-Next — High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect</title>
+  <meta name="title" content="Livy-Next — High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect">
+  <meta name="description" content="Livy-Next is a lightweight, ultra-fast Apache Livy replacement written in Go for Apache Spark 4.x Connect. Zero JVM footprint, sub-millisecond dispatch, Apache Arrow transport, drop-in REST compatibility, and interactive SQL Studio.">
+  <meta name="keywords" content="Apache Spark, Spark Connect, Livy, Livy-Next, Spark 4.x, Golang, Big Data, Data Engineering, Apache Arrow, gRPC, Apache Airflow, Jupyter, SQL Studio">
+  <meta name="author" content="Vijay Raghuwanshi & Livy-Next Contributors">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#07090e">
+  <meta name="color-scheme" content="dark">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ervijayraghuwanshi.github.io/livy-next/">
+  <meta property="og:title" content="Livy-Next — High-Performance Cloud-Native Gateway for Apache Spark 4.x Connect">
+  <meta property="og:description" content="Sub-millisecond REST API gateway for Apache Spark 4.x. Zero JVM footprint, Apache Arrow columnar streaming, and drop-in Livy compatibility.">
+  <meta property="og:image" content="assets/logo-banner.svg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://ervijayraghuwanshi.github.io/livy-next/">
+  <meta property="twitter:title" content="Livy-Next — Cloud-Native Spark 4.x Gateway">
+  <meta property="twitter:description" content="Sub-millisecond REST API gateway for Apache Spark 4.x Connect written in Go. Zero JVM, pure speed.">
+  <meta property="twitter:image" content="assets/logo-banner.svg">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="apple-touch-icon" href="assets/logo.svg">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#" class="nav-brand">
+        <img src="assets/logo.svg" alt="Livy-Next Logo" class="nav-logo-icon">
+        <span>Livy<span class="gradient-text">-Next</span></span>
+        <span class="brand-tag">v1.0.0</span>
+      </a>
+
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#architecture" class="nav-link">Architecture</a></li>
+        <li><a href="#compare" class="nav-link">Comparison</a></li>
+        <li><a href="#quickstart" class="nav-link">Quickstart</a></li>
+        <li><a href="#api" class="nav-link">API Specs</a></li>
+        <li><a href="#config" class="nav-link">Config</a></li>
+        <li><a href="#roadmap" class="nav-link">Roadmap</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a href="https://github.com/ErVijayRaghuwanshi/livy-next" target="_blank" rel="noopener" class="nav-btn-gh">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span>GitHub</span>
+          <span class="star-count">★ Star</span>
+        </a>
+
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation menu">
+          &#9776;
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-pill">
+        <span class="hero-pill-badge">Release v1.0.0</span>
+        <span>Built for Apache Spark 4.x & Spark Connect</span>
+      </div>
+
+      <h1 class="hero-title">
+        High-Performance Cloud-Native Gateway for <span class="gradient-text">Apache Spark 4.x</span>
+      </h1>
+
+      <p class="hero-description">
+        `livy-next` is a modern, lightweight Apache Livy successor written in Go. It bridges traditional notebook tools, Apache Airflow, and REST microservices to modern Spark 4.x clusters over high-speed Spark Connect gRPC with <strong>zero JVM footprint</strong> and <strong>sub-millisecond dispatch</strong>.
+      </p>
+
+      <div class="hero-cta">
+        <a href="#quickstart" class="btn btn-primary">
+          <span>Get Started Now</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </a>
+        <a href="https://github.com/ErVijayRaghuwanshi/livy-next" target="_blank" rel="noopener" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span>View on GitHub</span>
+        </a>
+        <a href="#api" class="btn btn-secondary">
+          <span>Explore API Playground</span>
+        </a>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="hero-metrics">
+        <div class="metric-card">
+          <div class="metric-val gradient-text">&lt; 1 ms</div>
+          <div class="metric-label">Dispatch Latency</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">0 JVM</div>
+          <div class="metric-label">Gateway Footprint</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">100%</div>
+          <div class="metric-label">Livy API Drop-in</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">Arrow</div>
+          <div class="metric-label">Columnar Transport</div>
+        </div>
+      </div>
+
+      <!-- Interactive Terminal -->
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <span class="terminal-title">bash — livy-next boot & query execution</span>
+          <div></div>
+        </div>
+        <div class="terminal-body">
+          <p><span class="t-prompt">$</span> <span class="t-cmd">./bin/livy-next --addr :8998 --spark-remote sc://localhost:15002</span></p>
+          <p class="t-log">[INFO] [main] Starting livy-next v1.0.0 (Go 1.24, darwin/arm64)</p>
+          <p class="t-info">[INFO] [probe] Dynamically probing remote Spark Connect cluster at sc://localhost:15002...</p>
+          <p class="t-success">[INFO] [probe] Connected! Runtime Spark: <span class="t-highlight">4.2.0</span> | Master: <span class="t-highlight">spark://cluster-master:7077</span></p>
+          <p class="t-info">[INFO] [manager] Synchronizing session idle timeout from cluster: 30m0s</p>
+          <p class="t-success">[INFO] [http] REST Gateway listening on :8998 (Swagger: /swagger/index.html | UI: /ui)</p>
+          <br>
+          <p><span class="t-prompt">$</span> <span class="t-cmd">curl -s -X POST http://localhost:8998/sessions/0/statements -d '{"code":"SELECT department, avg(salary) FROM emp GROUP BY 1"}'</span></p>
+          <p class="t-log">{"id": 0, "code": "SELECT department, avg(salary)...", "state": "waiting", "progress": 0}</p>
+          <br>
+          <p class="t-accent">[TRACE] Dispatching logical SQL plan via Spark Connect gRPC stream in 0.8ms</p>
+          <p class="t-success">[TRACE] Decoded 4 batches of Apache Arrow IPC records into Livy JSON table format (1.2ms)</p>
+          <p class="t-log">{"id": 0, "state": "available", "output": {"status": "ok", "data": {"schema": {...}, "data": [["Engineering", 145000], ["Sales", 112000]]}}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Paradigm Shift Section -->
+  <section class="shift-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Why Livy-Next</span>
+        <h2 class="section-title">The Paradigm Shift for Apache Spark</h2>
+        <p class="section-subtitle">Why traditional Apache Livy no longer makes sense for modern Spark 4.x cloud architectures.</p>
+      </div>
+
+      <div class="shift-grid">
+        <div class="shift-card legacy">
+          <span class="shift-tag">Legacy Architecture</span>
+          <h3>Traditional Apache Livy</h3>
+          <p>Created in 2015 for Hadoop YARN and Spark 1.x/2.x. Requires a heavy local JVM daemon that forks heavyweight client drivers.</p>
+          <ul class="shift-list">
+            <li class="shift-item">
+              <span class="shift-icon">❌</span>
+              <div><strong>Heavy JVM Memory Footprint:</strong> Consumes 1–2 GB heap memory per gateway instance just to route requests.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">❌</span>
+              <div><strong>High Dispatch Latency:</strong> Spawns separate processes or driver wrappers, taking seconds or minutes to start sessions.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">❌</span>
+              <div><strong>No Spark Connect Support:</strong> Incompatible with Spark 4.x's decoupled gRPC client/server protocol.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">❌</span>
+              <div><strong>Complex Maintenance:</strong> Massive Scala codebase with legacy dependencies, difficult to containerize cleanly.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="shift-card modern">
+          <span class="shift-tag">Modern Cloud-Native</span>
+          <h3>Livy-Next Gateway</h3>
+          <p>Statically compiled Go binary built from scratch for Spark 4.x Connect with gRPC and Apache Arrow streaming.</p>
+          <ul class="shift-list">
+            <li class="shift-item">
+              <span class="shift-icon">✅</span>
+              <div><strong>Zero Local JVM:</strong> 100% pure Go binary (&lt; 40MB) using only ~15–30 MB RSS memory. Instant container boot.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">✅</span>
+              <div><strong>Sub-Millisecond Routing:</strong> Translates REST JSON payloads directly into binary gRPC calls over persistent channels.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">✅</span>
+              <div><strong>Native Spark Connect:</strong> Communicates via `sc://` directly to Spark 4.x drivers with Apache Arrow columnar data.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">✅</span>
+              <div><strong>100% Drop-In Compatible:</strong> Works out of the box with Apache Airflow `LivyHook`, Jupyter `sparkmagic`, and custom pipelines.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features Grid -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Core Capabilities</span>
+        <h2 class="section-title">Engineered for Reliability & Speed</h2>
+        <p class="section-subtitle">Everything you need to run high-throughput enterprise interactive Spark workloads.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">⚡</div>
+          <h3>Zero-JVM Architecture</h3>
+          <p>Compiled to a standalone, zero-dependency Go binary. Runs seamlessly in minimal Docker scratch containers or Kubernetes pods without any Java runtime.</p>
+          <span class="feature-badge">Go 1.24 · &lt; 30MB RAM</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔗</div>
+          <h3>Spark Connect Native</h3>
+          <p>Directly leverages the official Spark Connect gRPC protocol (`sc://`). Streams queries and receives results via high-speed Apache Arrow IPC buffers.</p>
+          <span class="feature-badge">Spark 4.x · Arrow IPC</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔄</div>
+          <h3>Drop-in Livy REST API</h3>
+          <p>Exposes complete Livy-compliant endpoints (`/sessions`, `/statements`, `/batches`). Existing pipelines and notebooks switch over simply by pointing the URL.</p>
+          <span class="feature-badge">RFC Livy REST</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">⏱️</div>
+          <h3>Dynamic Timeout Sync</h3>
+          <p>Probes and synchronizes session idle timeouts directly from the Spark Connect cluster configuration (`spark.connect.session.timeout`) automatically.</p>
+          <span class="feature-badge">Auto-Reaping · Zero Leaks</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🎯</div>
+          <h3>Dual Session Addressing</h3>
+          <p>Access sessions seamlessly using either sequential numeric indices (`/sessions/0`) or standard Spark Connect UUIDs (`/sessions/bcc26fc0-...`).</p>
+          <span class="feature-badge">Index &amp; UUID Routing</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">📊</div>
+          <h3>Built-in Studio &amp; Swagger</h3>
+          <p>Embedded dark-mode web dashboard at `/ui` with interactive SQL execution, pagination, log viewing, and interactive OpenAPI specs at `/swagger/index.html`.</p>
+          <span class="feature-badge">Dark Studio · Swagger 2.0</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🛡️</div>
+          <h3>Graceful Lifecycle Controls</h3>
+          <p>Traps OS signals (`SIGTERM`, `SIGINT`), draining in-flight HTTP connections and automatically releasing remote Spark Connect sessions before exit.</p>
+          <span class="feature-badge">Connection Draining</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🧪</div>
+          <h3>Offline CI/CD Mock Mode</h3>
+          <p>Start with `--mock` to simulate full Spark Connect cluster execution in-memory. Perfect for local integration tests and automated GitHub Actions pipelines.</p>
+          <span class="feature-badge">Mock Driver · Zero Cluster</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Section -->
+  <section class="arch-section" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">System Topology</span>
+        <h2 class="section-title">Clean, Decoupled Architecture</h2>
+        <p class="section-subtitle">How Livy-Next mediates between client applications and Spark 4.x clusters.</p>
+      </div>
+
+      <div class="arch-visual">
+        <div class="arch-flow">
+          <!-- Column 1: Clients -->
+          <div class="arch-col">
+            <div class="arch-box">
+              <div class="arch-box-title">Apache Airflow</div>
+              <div class="arch-box-desc">LivyHook / LivyOperator</div>
+            </div>
+            <div class="arch-box">
+              <div class="arch-box-title">Jupyter &amp; Notebooks</div>
+              <div class="arch-box-desc">sparkmagic / requests</div>
+            </div>
+            <div class="arch-box">
+              <div class="arch-box-title">Microservices / BI</div>
+              <div class="arch-box-desc">Custom REST Clients</div>
+            </div>
+          </div>
+
+          <!-- Connector 1 -->
+          <div class="arch-connector">
+            <span>HTTP REST</span>
+            <span class="arch-arrow">➔</span>
+            <span>Port 8998</span>
+          </div>
+
+          <!-- Column 2: Livy-Next Gateway -->
+          <div class="arch-col">
+            <div class="arch-box highlight">
+              <div class="arch-box-title">Livy-Next Gateway (Go)</div>
+              <div class="arch-box-desc">Statically compiled runtime</div>
+              <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 0.76rem; color: #818cf8;">
+                <div>• Chi HTTP Router + CORS</div>
+                <div>• Thread-safe Session Registry</div>
+                <div>• Spark Connect gRPC Client</div>
+                <div>• Arrow IPC Stream Decoder</div>
+                <div>• Embedded Dark Studio UI</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Connector 2 -->
+          <div class="arch-connector">
+            <span>gRPC Protocol</span>
+            <span class="arch-arrow">➔</span>
+            <span>Port 15002</span>
+          </div>
+
+          <!-- Column 3: Spark Cluster -->
+          <div class="arch-col">
+            <div class="arch-box">
+              <div class="arch-box-title">Spark Connect Server</div>
+              <div class="arch-box-desc">JVM Head Node (sc://)</div>
+            </div>
+            <div class="arch-box">
+              <div class="arch-box-title">Spark Master</div>
+              <div class="arch-box-desc">Cluster Orchestrator</div>
+            </div>
+            <div class="arch-box">
+              <div class="arch-box-title">Spark Workers</div>
+              <div class="arch-box-desc">Distributed Arrow Tasks</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Performance Comparison -->
+  <section class="compare-section" id="compare">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Head to Head</span>
+        <h2 class="section-title">Livy-Next vs. Legacy Apache Livy</h2>
+        <p class="section-subtitle">Real-world comparison of runtime efficiency and architectural capabilities.</p>
+      </div>
+
+      <div class="compare-table-wrapper">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature / Metric</th>
+              <th class="livy-col">Livy-Next (v1.0.0)</th>
+              <th>Legacy Apache Livy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Runtime Language</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Go 1.24 (Single Static Binary)</span></td>
+              <td>Java / Scala (JVM 8/11)</td>
+            </tr>
+            <tr>
+              <td><strong>Spark Version Support</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Apache Spark 4.x (Spark Connect)</span></td>
+              <td>Spark 1.6 – 3.x (Legacy Submit)</td>
+            </tr>
+            <tr>
+              <td><strong>Gateway Memory (Idle)</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">~15 – 30 MB RSS</span></td>
+              <td>1,024 – 2,048 MB JVM Heap</td>
+            </tr>
+            <tr>
+              <td><strong>Statement Dispatch Overhead</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">&lt; 1 ms (direct gRPC)</span></td>
+              <td>500 ms – 3,000 ms</td>
+            </tr>
+            <tr>
+              <td><strong>Data Transport Format</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Apache Arrow IPC Columnar</span></td>
+              <td>Text / JSON Row Serialization</td>
+            </tr>
+            <tr>
+              <td><strong>Local JVM Dependency</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Zero JVM required on gateway</span></td>
+              <td>Requires full JDK &amp; Spark jars locally</td>
+            </tr>
+            <tr>
+              <td><strong>Embedded Dashboard</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Dark Mode SQL Studio + Swagger UI</span></td>
+              <td>Basic static HTML table (2015)</td>
+            </tr>
+            <tr>
+              <td><strong>Automated CI Testing</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Built-in `--mock` mode</span></td>
+              <td>Requires full live Spark cluster</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quickstart Section -->
+  <section class="quickstart-section" id="quickstart">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Getting Started</span>
+        <h2 class="section-title">Up and Running in 60 Seconds</h2>
+        <p class="section-subtitle">Deploy via Docker, compile with Go, or integrate directly with Apache Airflow.</p>
+      </div>
+
+      <div class="tab-container">
+        <div class="tab-header">
+          <button class="tab-btn active" data-tab="tab-docker">🐳 Docker</button>
+          <button class="tab-btn" data-tab="tab-binary">⚡ Go Binary / Make</button>
+          <button class="tab-btn" data-tab="tab-airflow">🌪️ Apache Airflow</button>
+          <button class="tab-btn" data-tab="tab-curl">🌐 cURL REST</button>
+        </div>
+
+        <!-- Docker Tab -->
+        <div class="tab-content active" id="tab-docker">
+          <div class="code-block-wrapper">
+            <button class="copy-btn">📋 Copy</button>
+            <pre class="code-pre"><code># Run Livy-Next connected to a remote Spark 4.x Connect cluster
+docker run -d \
+  --name livy-next \
+  -p 8998:8998 \
+  -e SPARK_REMOTE="sc://spark-master:15002" \
+  -e IDLE_TIMEOUT="30m" \
+  ghcr.io/ervijayraghuwanshi/livy-next:v1.0.0
+
+# Verify the service is online
+curl http://localhost:8998/version</code></pre>
+          </div>
+        </div>
+
+        <!-- Binary Tab -->
+        <div class="tab-content" id="tab-binary">
+          <div class="code-block-wrapper">
+            <button class="copy-btn">📋 Copy</button>
+            <pre class="code-pre"><code># Clone repository and compile binary
+git clone https://github.com/ErVijayRaghuwanshi/livy-next.git
+cd livy-next
+
+# Download dependencies and build binary
+make tidy
+make build
+
+# Start the gateway pointing to Spark Connect
+./bin/livy-next --addr :8998 --spark-remote sc://localhost:15002 --cors-allowed-origins "*"</code></pre>
+          </div>
+        </div>
+
+        <!-- Airflow Tab -->
+        <div class="tab-content" id="tab-airflow">
+          <div class="code-block-wrapper">
+            <button class="copy-btn">📋 Copy</button>
+            <pre class="code-pre"><code>from airflow import DAG
+from airflow.providers.apache.livy.operators.livy import LivyOperator
+from datetime import datetime
+
+with DAG(
+    dag_id="spark_connect_pipeline",
+    start_date=datetime(2026, 1, 1),
+    schedule="@daily",
+    catchup=False,
+) as dag:
+    # Drop-in compatible with standard Airflow LivyOperator!
+    run_spark_query = LivyOperator(
+        task_id="aggregate_sales",
+        livy_conn_id="livy_next_default",  # Pointed to http://livy-next:8998
+        file="spark_job.py",
+        conf={"spark.sql.shuffle.partitions": "16"},
+    )</code></pre>
+          </div>
+        </div>
+
+        <!-- cURL Tab -->
+        <div class="tab-content" id="tab-curl">
+          <div class="code-block-wrapper">
+            <button class="copy-btn">📋 Copy</button>
+            <pre class="code-pre"><code># 1. Create a new interactive session
+curl -X POST http://localhost:8998/sessions \
+  -H "Content-Type: application/json" \
+  -d '{"kind": "spark", "name": "analytics-session"}'
+
+# 2. Submit SQL statement
+curl -X POST http://localhost:8998/sessions/0/statements \
+  -H "Content-Type: application/json" \
+  -d '{"code": "SELECT current_timestamp(), count(*) FROM delta.`/data/events`"}'
+
+# 3. Poll statement results
+curl http://localhost:8998/sessions/0/statements/0</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive API Explorer -->
+  <section class="api-section" id="api">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">API Playground</span>
+        <h2 class="section-title">Interactive REST Specifications</h2>
+        <p class="section-subtitle">Explore live request and response payloads matching the Apache Livy standard.</p>
+      </div>
+
+      <div class="api-explorer">
+        <div class="api-sidebar">
+          <div class="api-sidebar-header">Core Endpoints</div>
+          <div class="api-nav-item active" data-api-target="api-create-session">
+            <span class="http-method method-post">POST</span>
+            <span>/sessions</span>
+          </div>
+          <div class="api-nav-item" data-api-target="api-run-statement">
+            <span class="http-method method-post">POST</span>
+            <span>/sessions/{id}/statements</span>
+          </div>
+          <div class="api-nav-item" data-api-target="api-poll-statement">
+            <span class="http-method method-get">GET</span>
+            <span>/sessions/{id}/statements/{id}</span>
+          </div>
+          <div class="api-nav-item" data-api-target="api-version">
+            <span class="http-method method-get">GET</span>
+            <span>/version</span>
+          </div>
+          <div class="api-nav-item" data-api-target="api-delete-session">
+            <span class="http-method method-delete">DEL</span>
+            <span>/sessions/{id}</span>
+          </div>
+        </div>
+
+        <div class="api-content">
+          <!-- Pane 1: POST /sessions -->
+          <div class="api-pane active" id="api-create-session">
+            <div class="api-endpoint-badge">
+              <span class="http-method method-post">POST</span>
+              <code>/sessions</code>
+            </div>
+            <div class="api-split">
+              <div>
+                <div class="api-subhead">Request JSON Body</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "kind": "spark",
+  "name": "daily-analytics",
+  "conf": {
+    "spark.sql.shuffle.partitions": "32"
+  },
+  "jars": [
+    "hdfs:///libs/delta-core.jar"
+  ]
+}</code></pre>
+                </div>
+              </div>
+              <div>
+                <div class="api-subhead">Response (201 Created)</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "id": 0,
+  "name": "daily-analytics",
+  "state": "idle",
+  "kind": "spark",
+  "appInfo": {
+    "driverLogUrl": null,
+    "sparkUiUrl": "http://localhost:4141"
+  },
+  "log": ["Session created and connected to sc://localhost:15002"],
+  "statements": []
+}</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 2: POST /sessions/{id}/statements -->
+          <div class="api-pane" id="api-run-statement">
+            <div class="api-endpoint-badge">
+              <span class="http-method method-post">POST</span>
+              <code>/sessions/0/statements</code>
+            </div>
+            <div class="api-split">
+              <div>
+                <div class="api-subhead">Request JSON Body</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "code": "SELECT 100 * 200 AS multiplication_result"
+}</code></pre>
+                </div>
+              </div>
+              <div>
+                <div class="api-subhead">Response (201 Created)</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "id": 0,
+  "code": "SELECT 100 * 200 AS multiplication_result",
+  "state": "waiting",
+  "progress": 0.0
+}</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 3: GET /sessions/{id}/statements/{id} -->
+          <div class="api-pane" id="api-poll-statement">
+            <div class="api-endpoint-badge">
+              <span class="http-method method-get">GET</span>
+              <code>/sessions/0/statements/0</code>
+            </div>
+            <div class="api-split">
+              <div>
+                <div class="api-subhead">Description</div>
+                <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6;">
+                  Polls the asynchronous execution status of statement 0. When completed, Apache Arrow columnar batches are formatted into standard Livy JSON table schema.
+                </p>
+              </div>
+              <div>
+                <div class="api-subhead">Response (200 OK)</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "id": 0,
+  "state": "available",
+  "progress": 1.0,
+  "output": {
+    "status": "ok",
+    "execution_count": 0,
+    "data": {
+      "application/json": {
+        "schema": {
+          "type": "struct",
+          "fields": [
+            {
+              "name": "multiplication_result",
+              "type": "integer",
+              "nullable": true
+            }
+          ]
+        },
+        "data": [
+          [20000]
+        ]
+      }
+    }
+  }
+}</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 4: GET /version -->
+          <div class="api-pane" id="api-version">
+            <div class="api-endpoint-badge">
+              <span class="http-method method-get">GET</span>
+              <code>/version</code>
+            </div>
+            <div class="api-split">
+              <div>
+                <div class="api-subhead">Description</div>
+                <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6;">
+                  Queries both the Livy-Next gateway release version and the underlying Apache Spark Connect cluster runtime details probed dynamically on startup.
+                </p>
+              </div>
+              <div>
+                <div class="api-subhead">Response (200 OK)</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "version": "1.0.0",
+  "sparkVersion": "4.2.0",
+  "sparkMaster": "spark://cluster-master:7077",
+  "build": "livy-next"
+}</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 5: DELETE /sessions/{id} -->
+          <div class="api-pane" id="api-delete-session">
+            <div class="api-endpoint-badge">
+              <span class="http-method method-delete">DELETE</span>
+              <code>/sessions/0</code>
+            </div>
+            <div class="api-split">
+              <div>
+                <div class="api-subhead">Description</div>
+                <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6;">
+                  Triggers graceful session teardown. Sends a `ReleaseSession` RPC to the remote Spark Connect server and cleans up internal registry state.
+                </p>
+              </div>
+              <div>
+                <div class="api-subhead">Response (200 OK)</div>
+                <div class="code-block-wrapper">
+                  <pre class="code-pre"><code>{
+  "msg": "deleted"
+}</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Configuration Reference -->
+  <section class="config-section" id="config">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">CLI Flags &amp; Options</span>
+        <h2 class="section-title">Runtime Configuration</h2>
+        <p class="section-subtitle">Fine-tune networking, keep-alives, timeouts, and cluster parameters.</p>
+      </div>
+
+      <div class="config-filter-box">
+        <input type="text" id="configSearch" class="config-search" placeholder="Filter flags (e.g. timeout, cors, spark)...">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">Showing all production flags for v1.0.0</div>
+      </div>
+
+      <div class="compare-table-wrapper">
+        <table class="compare-table" id="configTable">
+          <thead>
+            <tr>
+              <th>CLI Flag</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>--addr</code></td>
+              <td><code>:8998</code></td>
+              <td>Host address and port the Livy-Next HTTP gateway binds to.</td>
+            </tr>
+            <tr>
+              <td><code>--spark-remote</code></td>
+              <td><code>sc://localhost:15002</code></td>
+              <td>Connection string for the remote Spark Connect gRPC server.</td>
+            </tr>
+            <tr>
+              <td><code>--spark-ui-url</code></td>
+              <td><code>http://localhost:4141</code></td>
+              <td>Base URL for the Spark Web UI (deep-linked from sessions).</td>
+            </tr>
+            <tr>
+              <td><code>--spark-history-url</code></td>
+              <td><code>http://localhost:18088</code></td>
+              <td>Base URL for the Spark History Server UI.</td>
+            </tr>
+            <tr>
+              <td><code>--spark-token</code></td>
+              <td><code>""</code></td>
+              <td>Pre-shared authentication bearer token for Spark Connect.</td>
+            </tr>
+            <tr>
+              <td><code>--idle-timeout</code></td>
+              <td><code>30m</code></td>
+              <td>Duration after which inactive running sessions are automatically reaped.</td>
+            </tr>
+            <tr>
+              <td><code>--sync-session-timeout</code></td>
+              <td><code>true</code></td>
+              <td>Dynamically inherit session timeout from Spark Connect server.</td>
+            </tr>
+            <tr>
+              <td><code>--dead-timeout</code></td>
+              <td><code>5m</code></td>
+              <td>Duration after which dead/stopped sessions are removed from memory.</td>
+            </tr>
+            <tr>
+              <td><code>--default-statement-limit</code></td>
+              <td><code>10000</code></td>
+              <td>Default maximum rows returned by SQL queries (0 for unlimited).</td>
+            </tr>
+            <tr>
+              <td><code>--grpc-keepalive-time</code></td>
+              <td><code>60s</code></td>
+              <td>gRPC keepalive ping frequency for Spark Connect channels.</td>
+            </tr>
+            <tr>
+              <td><code>--grpc-keepalive-timeout</code></td>
+              <td><code>20s</code></td>
+              <td>gRPC keepalive ping timeout duration before reconnection.</td>
+            </tr>
+            <tr>
+              <td><code>--cors-allowed-origins</code></td>
+              <td><code>*</code></td>
+              <td>Comma-separated list of allowed CORS origins for browser security.</td>
+            </tr>
+            <tr>
+              <td><code>--mock</code></td>
+              <td><code>false</code></td>
+              <td>Enables in-memory mock Spark client for offline CI/CD verification.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Project Roadmap -->
+  <section class="roadmap-section" id="roadmap">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Evolution</span>
+        <h2 class="section-title">Project Roadmap</h2>
+        <p class="section-subtitle">Tracing the evolution from v1.0.0 to enterprise-grade multi-tenant orchestration.</p>
+      </div>
+
+      <div class="roadmap-timeline">
+        <div class="roadmap-card completed">
+          <div class="roadmap-phase">Phase 1 · Completed (v1.0.0)</div>
+          <h4>Core Gateway Engine</h4>
+          <ul class="roadmap-items">
+            <li><span>✓</span> Spark Connect gRPC Client</li>
+            <li><span>✓</span> Drop-in Livy REST compatibility</li>
+            <li><span>✓</span> Apache Arrow Columnar Parser</li>
+            <li><span>✓</span> Dynamic Cluster Probing</li>
+            <li><span>✓</span> Embedded Dark Mode Studio UI</li>
+          </ul>
+        </div>
+
+        <div class="roadmap-card in-progress">
+          <div class="roadmap-phase">Phase 2 · In Progress</div>
+          <h4>Extended Execution</h4>
+          <ul class="roadmap-items">
+            <li><span>⚡</span> Spark Submit Batch APIs</li>
+            <li><span>⚡</span> Delta Lake Time Travel UI</li>
+            <li><span>⚡</span> Structured Streaming Monitors</li>
+            <li><span>⚡</span> High-concurrency query pooling</li>
+          </ul>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-phase">Phase 3 · Planned</div>
+          <h4>Security &amp; Governance</h4>
+          <ul class="roadmap-items">
+            <li><span>○</span> OIDC / OAuth2 &amp; Kerberos auth</li>
+            <li><span>○</span> Granular RBAC &amp; Tenant isolation</li>
+            <li><span>○</span> Prometheus Metrics Exporter</li>
+            <li><span>○</span> OpenTelemetry Distributed Tracing</li>
+          </ul>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-phase">Phase 4 · Future Vision</div>
+          <h4>Cloud Scale Control Plane</h4>
+          <ul class="roadmap-items">
+            <li><span>○</span> Kubernetes Native Operator (CRDs)</li>
+            <li><span>○</span> Dynamic Cluster Auto-scaling</li>
+            <li><span>○</span> Distributed Gateway Mesh</li>
+            <li><span>○</span> Multi-cluster Failover</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="container" style="margin-top: 40px;">
+    <div class="footer-cta">
+      <h2>Supercharge Your Spark 4.x Pipelines Today</h2>
+      <p>Drop-in replacement. Zero JVM footprint. Sub-millisecond dispatch. Open source under Apache 2.0.</p>
+      <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+        <a href="https://github.com/ErVijayRaghuwanshi/livy-next" target="_blank" rel="noopener" class="btn btn-primary">
+          <span>Star on GitHub</span>
+          <span>★</span>
+        </a>
+        <a href="#quickstart" class="btn btn-secondary">
+          <span>View Quickstart Guide</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="assets/logo.svg" alt="Livy-Next Logo" width="32" height="32">
+            <span style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 800;">Livy-Next</span>
+          </div>
+          <p>
+            High-performance cloud-native gateway for Apache Spark 4.x Connect. Written in Go with zero JVM overhead.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Documentation</h5>
+          <ul class="footer-links">
+            <li><a href="#features">Key Features</a></li>
+            <li><a href="#architecture">Architecture &amp; HLD</a></li>
+            <li><a href="#compare">Benchmark Comparison</a></li>
+            <li><a href="#config">Configuration Options</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Integrations</h5>
+          <ul class="footer-links">
+            <li><a href="#quickstart">Apache Airflow</a></li>
+            <li><a href="#quickstart">Jupyter Notebooks</a></li>
+            <li><a href="#quickstart">Docker &amp; K8s</a></li>
+            <li><a href="#api">OpenAPI / Swagger</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Community</h5>
+          <ul class="footer-links">
+            <li><a href="https://github.com/ErVijayRaghuwanshi/livy-next" target="_blank" rel="noopener">GitHub Repository</a></li>
+            <li><a href="https://github.com/ErVijayRaghuwanshi/livy-next/issues" target="_blank" rel="noopener">Issue Tracker</a></li>
+            <li><a href="https://github.com/ErVijayRaghuwanshi/livy-next/releases" target="_blank" rel="noopener">Release Notes</a></li>
+            <li><a href="https://github.com/ErVijayRaghuwanshi/livy-next/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0 License</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 <strong>Livy-Next Contributors</strong>. Released under the <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener" style="text-decoration: underline;">Apache License 2.0</a>.
+        </div>
+        <div>
+          Maintained by <a href="https://github.com/ErVijayRaghuwanshi" target="_blank" rel="noopener" style="color: var(--accent-cyan); font-weight: 600;">Er. Vijay Raghuwanshi</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript -->
+  <script src="js/main.js"></script>
+</body>
+</html>
