@@ -113,7 +113,7 @@ func TestLivyAPI(t *testing.T) {
 		return mockClient, nil
 	}
 
-	handler := api.NewHandler(manager, creator, "http://localhost:4040", "http://localhost:18088")
+	handler := api.NewHandler(manager, creator, "sc://localhost:15002", "http://localhost:4040", "http://localhost:18088")
 	router := api.SetupRouter(handler, []string{"http://example.com"})
 
 	// 1. Create a Session with identity parameters & Verify CORS
@@ -314,7 +314,7 @@ func TestCreateSession_InheritSparkTimeout(t *testing.T) {
 		return mockClient, nil
 	}
 
-	h := api.NewHandler(mgr, creator, "http://spark-ui:4040", "http://spark-history:18088", true)
+	h := api.NewHandler(mgr, creator, "sc://spark-connect:15002", "http://spark-ui:4040", "http://spark-history:18088", true)
 	router := api.SetupRouter(h, []string{"*"})
 
 	// Initially manager idle timeout is 30m
@@ -363,4 +363,38 @@ func TestCreateSession_InheritSparkTimeout(t *testing.T) {
 	assert.Equal(t, "1.0.0", versionResp.Version)
 	assert.Equal(t, "4.2.0", versionResp.SparkVersion)
 	assert.Equal(t, "spark://spark-master:7077", versionResp.SparkMaster)
+}
+
+func TestSparkUIProxy(t *testing.T) {
+	// 1. Mock upstream Spark UI server
+	var receivedForwardedContext string
+	var receivedPath string
+	mockSparkUI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedForwardedContext = r.Header.Get("X-Forwarded-Context")
+		receivedPath = r.URL.Path
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("<html><body>Spark Connect Server Mock UI</body></html>"))
+	}))
+	defer mockSparkUI.Close()
+
+	mgr := session.NewManager(30*time.Minute, 5*time.Minute)
+	creator := func(params session.SessionCreateParams) (session.SparkClient, error) {
+		return &MockSparkClient{}, nil
+	}
+
+	// 2. Initialize Handler with empty sparkUIUrl to trigger reverse proxying to mockSparkUI
+	h := api.NewHandler(mgr, creator, mockSparkUI.URL, "", "http://localhost:18088", false)
+	router := api.SetupRouter(h, []string{"*"})
+
+	// 3. Test proxying GET /spark-ui/connect/session/?id=test-uuid
+	req, _ := http.NewRequest("GET", "/spark-ui/connect/session/?id=test-uuid", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	// Verify effective Spark UI URL is the proxy path
+	assert.Equal(t, "/spark-ui", h.GetEffectiveSparkUIUrl())
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "/spark-ui", receivedForwardedContext)
+	assert.Equal(t, "/connect/session/", receivedPath)
 }

@@ -42,6 +42,7 @@ func SetupRouter(h *Handler, allowedOrigins []string) *chi.Mux {
 	r.Head("/favicon.ico", faviconHandler)
 
 	r.Get("/version", h.GetVersion)
+	r.Mount("/spark-ui", h.SparkUIProxyHandler())
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),

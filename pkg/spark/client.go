@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -147,6 +149,90 @@ func ParseSparkDuration(s string) (time.Duration, error) {
 	}
 
 	return 0, fmt.Errorf("invalid spark duration %q: %w", s, err)
+}
+
+// ExtractHostFromRemote extracts the hostname or IP address from a Spark Connect remote URI.
+// Handles formats like "sc://localhost:15002", "sc://spark-master:15002/;session_id=...", "http://127.0.0.1:4040".
+func ExtractHostFromRemote(remote string) string {
+	clean := strings.TrimSpace(remote)
+	clean = strings.TrimPrefix(clean, "sc://")
+	clean = strings.TrimPrefix(clean, "spark://")
+	clean = strings.TrimPrefix(clean, "http://")
+	clean = strings.TrimPrefix(clean, "https://")
+	// Strip semicolon parameters if present
+	if idx := strings.Index(clean, ";"); idx != -1 {
+		clean = clean[:idx]
+	}
+	clean = strings.TrimRight(clean, "/")
+	host, _, err := net.SplitHostPort(clean)
+	if err == nil && host != "" {
+		return host
+	}
+	parts := strings.Split(clean, ":")
+	if len(parts) > 0 && parts[0] != "" {
+		return parts[0]
+	}
+	return "localhost"
+}
+
+// DiscoverSparkUIEndpoint probes the connected Spark Connect instance to find its active Web UI port.
+// Probes candidate ports [remotePort, 4040, 4041, 4141, 4042] on the remote host with a fast HTTP request.
+// Returns the reachable endpoint URL (e.g. "http://localhost:4040"), or fallback to default port 4040.
+func DiscoverSparkUIEndpoint(remote string) string {
+	clean := strings.TrimSpace(remote)
+	clean = strings.TrimPrefix(clean, "sc://")
+	clean = strings.TrimPrefix(clean, "spark://")
+	clean = strings.TrimPrefix(clean, "http://")
+	clean = strings.TrimPrefix(clean, "https://")
+	if idx := strings.Index(clean, ";"); idx != -1 {
+		clean = clean[:idx]
+	}
+	clean = strings.TrimRight(clean, "/")
+
+	host, portStr, _ := net.SplitHostPort(clean)
+	if host == "" || host == "0.0.0.0" {
+		if host == "" {
+			host = ExtractHostFromRemote(remote)
+		} else {
+			host = "127.0.0.1"
+		}
+	}
+
+	var candidatePorts []int
+	if portStr != "" {
+		if p, err := strconv.Atoi(portStr); err == nil && p > 0 {
+			candidatePorts = append(candidatePorts, p)
+		}
+	}
+	candidatePorts = append(candidatePorts, 4040, 4041, 4141, 4042)
+
+	client := &http.Client{
+		Timeout: 250 * time.Millisecond,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse // don't follow redirects, 302 means server is up
+		},
+	}
+
+	for _, port := range candidatePorts {
+		testURL := fmt.Sprintf("http://%s:%d/connect/", host, port)
+		resp, err := client.Get(testURL)
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusFound {
+				return fmt.Sprintf("http://%s:%d", host, port)
+			}
+		}
+		rootURL := fmt.Sprintf("http://%s:%d/", host, port)
+		respRoot, errRoot := client.Get(rootURL)
+		if errRoot == nil {
+			respRoot.Body.Close()
+			if respRoot.StatusCode == http.StatusOK || respRoot.StatusCode == http.StatusFound {
+				return fmt.Sprintf("http://%s:%d", host, port)
+			}
+		}
+	}
+
+	return fmt.Sprintf("http://%s:4040", host)
 }
 
 func (c *Client) GetSessionID() string {
