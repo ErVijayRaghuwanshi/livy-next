@@ -1,5 +1,15 @@
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /build
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /build/bin/livy-next cmd/livy-next/main.go
+
 # ==============================================================================
-# Project Argus: Hardened Spark 4.1.2 Image with Embedded livy-next REST Gateway
+# Stage 2: Apache Spark 4.1.2 Image with Embedded livy-next REST Gateway
 # ==============================================================================
 FROM apache/spark:4.1.2
 
@@ -18,8 +28,6 @@ RUN pip3 install --no-cache-dir \
     "redis" \
     "neo4j"
 
-    
-
 # Copy Spark defaults configuration
 COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
 
@@ -27,8 +35,8 @@ COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
 RUN mkdir -p /opt/spark/event_logs && \
     chown -R spark:spark /opt/spark/event_logs
 
-# Copy the pre-built Linux livy-next binary from the host
-COPY bin/livy-next /usr/local/bin/livy-next
+# Copy the pre-built Linux livy-next binary from builder stage
+COPY --from=builder /build/bin/livy-next /usr/local/bin/livy-next
 RUN chmod +x /usr/local/bin/livy-next
 
 # Create the entrypoint script
