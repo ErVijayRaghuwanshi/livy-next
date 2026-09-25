@@ -113,15 +113,19 @@
       <div class="hero-metrics">
         <div class="metric-card">
           <div class="metric-val gradient-text">&lt; 1 ms</div>
+          <div class="metric-label">Session Init (vs 20–600s)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">&lt; 1 ms</div>
           <div class="metric-label">Dispatch Latency</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val">Multi-Tenant</div>
+          <div class="metric-label">Shared Spark Connect</div>
         </div>
         <div class="metric-card">
           <div class="metric-val">0 JVM</div>
           <div class="metric-label">Gateway Footprint</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-val">100%</div>
-          <div class="metric-label">Livy API Drop-in</div>
         </div>
         <div class="metric-card">
           <div class="metric-val">Arrow</div>
@@ -137,7 +141,7 @@
             <span class="dot dot-yellow"></span>
             <span class="dot dot-green"></span>
           </div>
-          <span class="terminal-title">bash — livy-next boot & query execution</span>
+          <span class="terminal-title">bash — livy-next instant session creation &amp; query dispatch</span>
           <div></div>
         </div>
         <div class="terminal-body">
@@ -148,9 +152,13 @@
           <p class="t-info">[INFO] [manager] Synchronizing session idle timeout from cluster: 30m0s</p>
           <p class="t-success">[INFO] [http] REST Gateway listening on :8998 (Swagger: /swagger/index.html | UI: /ui)</p>
           <br>
+          <p><span class="t-prompt">$</span> <span class="t-cmd">curl -s -X POST http://localhost:8998/sessions -d '{"kind":"spark","name":"analytics-session"}'</span></p>
+          <p class="t-accent">[TRACE] Multiplexing session over shared Spark Connect engine (Multi-Tenant Architecture)</p>
+          <p class="t-success">[TRACE] Session 0 initialized in <span class="t-highlight">0.9ms</span> (Legacy Livy: 20–600s YARN allocation eliminated!)</p>
+          <p class="t-log">{"id": 0, "name": "analytics-session", "state": "idle", "kind": "spark", "statements": []}</p>
+          <br>
           <p><span class="t-prompt">$</span> <span class="t-cmd">curl -s -X POST http://localhost:8998/sessions/0/statements -d '{"code":"SELECT department, avg(salary) FROM emp GROUP BY 1"}'</span></p>
           <p class="t-log">{"id": 0, "code": "SELECT department, avg(salary)...", "state": "waiting", "progress": 0}</p>
-          <br>
           <p class="t-accent">[TRACE] Dispatching logical SQL plan via Spark Connect gRPC stream in 0.8ms</p>
           <p class="t-success">[TRACE] Decoded 4 batches of Apache Arrow IPC records into Livy JSON table format (1.2ms)</p>
           <p class="t-log">{"id": 0, "state": "available", "output": {"status": "ok", "data": {"schema": {...}, "data": [["Engineering", 145000], ["Sales", 112000]]}}}</p>
@@ -175,9 +183,17 @@
           <span class="shift-tag">Spark 2.x – 3.5 Era</span>
           <h3>Traditional Apache Livy</h3>
           <p>
-            A dependable pioneer for interactive Spark execution throughout the Spark 2.x and 3.x lifecycle. However, for modern Spark 4.x deployments, it encounters practical constraints:
+            A dependable pioneer for interactive Spark execution throughout the Spark 2.x and 3.x lifecycle. However, for modern Spark 4.x deployments, it encounters practical architectural constraints:
           </p>
           <ul class="shift-list">
+            <li class="shift-item">
+              <span class="shift-icon">⚠️</span>
+              <div><strong>20 to 600s Session Cold-Start Delay:</strong> Spawns an isolated, full Spark application and separate JVM driver for <em>every single session</em>. Users wait 20 to 600+ seconds for YARN resource allocation and driver startup.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">⚠️</span>
+              <div><strong>Resource Hoarding (No Shared Multi-Tenancy):</strong> Each idle session hoards dedicated YARN memory and CPU cores, blocking other users and inflating cloud cluster costs.</div>
+            </li>
             <li class="shift-item">
               <span class="shift-icon">⚠️</span>
               <div><strong>No Official Support Post-Spark 3.5:</strong> Upstream Apache Livy development has stalled, leaving no official releases or roadmap for Apache Spark 4.x.</div>
@@ -189,10 +205,6 @@
             <li class="shift-item">
               <span class="shift-icon">⚠️</span>
               <div><strong>Gateway JVM Overhead:</strong> Requires a local Java/Scala runtime and heavyweight JVM dependencies (1–2 GB heap) directly on the gateway host.</div>
-            </li>
-            <li class="shift-item">
-              <span class="shift-icon">⚠️</span>
-              <div><strong>Row-by-Row Serialization:</strong> Converts query outputs to text/JSON rows with noticeable serialization cost compared to binary columnar Arrow streams.</div>
             </li>
           </ul>
         </div>
@@ -206,19 +218,23 @@
           <ul class="shift-list">
             <li class="shift-item">
               <span class="shift-icon">✅</span>
+              <div><strong>Instant Multi-Tenant Sessions (&lt; 1ms):</strong> All sessions multiplex over a single, shared Spark Connect Server application. Creating a new session takes under 1ms with zero YARN allocation queue time or driver cold starts.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">✅</span>
+              <div><strong>True Multi-Tenant Cluster Efficiency:</strong> Multiple users, notebooks, and pipelines share cluster resources dynamically without spinning up wasteful isolated Spark applications.</div>
+            </li>
+            <li class="shift-item">
+              <span class="shift-icon">✅</span>
               <div><strong>Native Spark Connect (gRPC):</strong> Communicates directly with Spark 4.x drivers via <code>sc://</code> channels and Apache Arrow columnar memory transport.</div>
             </li>
             <li class="shift-item">
               <span class="shift-icon">✅</span>
-              <div><strong>100% Drop-In REST Preservation:</strong> Keeps existing Livy endpoints intact so notebooks, Airflow, and <a href="https://ervijayraghuwanshi.github.io/livy-ui" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: underline;">Livy-UI</a> run seamlessly without changes.</div>
+              <div><strong>100% Drop-In REST Preservation:</strong> Keeps existing Livy endpoints intact so notebooks, Airflow, and <a href="https://github.com/ErVijayRaghuwanshi/livy-ui" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: underline;">Livy-UI</a> run seamlessly without changes.</div>
             </li>
             <li class="shift-item">
               <span class="shift-icon">✅</span>
               <div><strong>Zero Local JVM:</strong> Single statically compiled Go binary (&lt; 40MB) using only ~15–30 MB RSS memory. Instant container boot with zero JVM dependencies.</div>
-            </li>
-            <li class="shift-item">
-              <span class="shift-icon">✅</span>
-              <div><strong>Sub-Millisecond Dispatch:</strong> Direct in-memory gRPC translation and persistent connection multiplexing eliminate driver startup latency.</div>
             </li>
           </ul>
         </div>
@@ -248,6 +264,13 @@
           <h3>Spark Connect Native</h3>
           <p>Directly leverages the official Spark Connect gRPC protocol (`sc://`). Streams queries and receives results via high-speed Apache Arrow IPC buffers.</p>
           <span class="feature-badge">Spark 4.x · Arrow IPC</span>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">⚡</div>
+          <h3>Instant Multi-Tenant Sessions</h3>
+          <p>Unlike legacy Livy which forks a full Spark application per session (taking 20–600s), Livy-Next multiplexes sessions over a shared Spark Connect server in &lt; 1ms with native multi-tenancy.</p>
+          <span class="feature-badge">&lt; 1ms Init · Shared Engine</span>
         </div>
 
         <div class="feature-card">
@@ -415,6 +438,16 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><strong>Session Creation Latency</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">&lt; 1 ms (Instant gRPC Session Init)</span></td>
+              <td>20 – 600 seconds (Spawns full Spark App / YARN containers)</td>
+            </tr>
+            <tr>
+              <td><strong>Spark Application Architecture</strong></td>
+              <td class="livy-col"><span class="status-badge status-win">Multi-Tenant Shared Server Engine</span></td>
+              <td>1 Isolated Spark App per Session (Resource hoarding)</td>
+            </tr>
             <tr>
               <td><strong>Runtime Language</strong></td>
               <td class="livy-col"><span class="status-badge status-win">Go 1.24 (Single Static Binary)</span></td>
