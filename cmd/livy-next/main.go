@@ -69,22 +69,64 @@ func buildSparkRemoteURI(baseRemote string, userId string, sessionId string, use
 }
 
 func main() {
-	addr := flag.String("addr", ":8998", "HTTP service address to bind to")
-	sparkRemote := flag.String("spark-remote", "sc://localhost:15002", "Spark Connect remote endpoint")
+	defaultAddr := ":8998"
+	if envAddr := os.Getenv("LIVY_ADDR"); envAddr != "" {
+		defaultAddr = envAddr
+	}
+	addr := flag.String("addr", defaultAddr, "HTTP service address to bind to")
+
+	defaultSparkRemote := "sc://localhost:15002"
+	if envRemote := os.Getenv("SPARK_REMOTE"); envRemote != "" {
+		defaultSparkRemote = envRemote
+	}
+	sparkRemote := flag.String("spark-remote", defaultSparkRemote, "Spark Connect remote endpoint")
+
 	defaultSparkUI := "http://localhost:4141"
 	if envUI := os.Getenv("SPARK_UI_URL"); envUI != "" {
 		defaultSparkUI = envUI
 	}
 	sparkUIUrl := flag.String("spark-ui-url", defaultSparkUI, "Base URL for the Spark Web UI")
-	sparkHistoryUrl := flag.String("spark-history-url", "http://localhost:18088", "Base URL for the Spark History Server UI")
-	sparkToken := flag.String("spark-token", "", "Pre-shared authentication token for Spark Connect")
+
+	defaultSparkHistory := "http://localhost:18088"
+	if envHist := os.Getenv("SPARK_HISTORY_URL"); envHist != "" {
+		defaultSparkHistory = envHist
+	}
+	sparkHistoryUrl := flag.String("spark-history-url", defaultSparkHistory, "Base URL for the Spark History Server UI")
+
+	defaultSparkToken := ""
+	if envToken := os.Getenv("SPARK_TOKEN"); envToken != "" {
+		defaultSparkToken = envToken
+	}
+	sparkToken := flag.String("spark-token", defaultSparkToken, "Pre-shared authentication token for Spark Connect")
+
 	grpcKeepaliveTime := flag.Duration("grpc-keepalive-time", 60*time.Second, "gRPC keepalive ping time")
 	grpcKeepaliveTimeout := flag.Duration("grpc-keepalive-timeout", 20*time.Second, "gRPC keepalive ping timeout")
 	defaultStatementLimit := flag.Int("default-statement-limit", 10000, "Default maximum rows returned by SQL statements (0 for unlimited)")
-	idleTimeout := flag.Duration("idle-timeout", 30*time.Minute, "Session idle timeout")
-	deadTimeout := flag.Duration("dead-timeout", 5*time.Minute, "Session dead/stopped retention duration in history")
+
+	defaultIdleTimeout := 30 * time.Minute
+	if envIdle := os.Getenv("IDLE_TIMEOUT"); envIdle != "" {
+		if d, err := time.ParseDuration(envIdle); err == nil {
+			defaultIdleTimeout = d
+		}
+	}
+	idleTimeout := flag.Duration("idle-timeout", defaultIdleTimeout, "Session idle timeout")
+
+	defaultDeadTimeout := 5 * time.Minute
+	if envDead := os.Getenv("DEAD_TIMEOUT"); envDead != "" {
+		if d, err := time.ParseDuration(envDead); err == nil {
+			defaultDeadTimeout = d
+		}
+	}
+	deadTimeout := flag.Duration("dead-timeout", defaultDeadTimeout, "Session dead/stopped retention duration in history")
+
 	syncSessionTimeout := flag.Bool("sync-session-timeout", true, "Synchronize session idle timeout with Spark Connect server")
-	corsAllowedOrigins := flag.String("cors-allowed-origins", "*", "Comma-separated list of allowed CORS origins")
+
+	defaultCors := "*"
+	if envCors := os.Getenv("CORS_ALLOWED_ORIGINS"); envCors != "" {
+		defaultCors = envCors
+	}
+	corsAllowedOrigins := flag.String("cors-allowed-origins", defaultCors, "Comma-separated list of allowed CORS origins")
+
 	mockMode := flag.Bool("mock", false, "Use in-memory mock Spark client for testing without a real Spark cluster")
 	flag.Parse()
 
