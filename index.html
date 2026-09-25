@@ -164,55 +164,61 @@
     <div class="container">
       <div class="section-header">
         <span class="section-badge">Why Livy-Next</span>
-        <h2 class="section-title">The Paradigm Shift for Apache Spark</h2>
-        <p class="section-subtitle">Why traditional Apache Livy no longer makes sense for modern Spark 4.x cloud architectures.</p>
+        <h2 class="section-title">The Evolution to Apache Spark 4.x</h2>
+        <p class="section-subtitle">
+          Legacy Apache Livy served Spark 2.x and 3.x reliably for years. However, beyond Spark 3.5, official Apache Livy maintenance has halted with no native support for Spark 4.x. As modern data architectures transition to high-speed gRPC and Spark Connect, <strong>Livy-Next</strong> provides the natural cloud-native evolution.
+        </p>
       </div>
 
       <div class="shift-grid">
         <div class="shift-card legacy">
-          <span class="shift-tag">Legacy Architecture</span>
+          <span class="shift-tag">Spark 2.x – 3.5 Era</span>
           <h3>Traditional Apache Livy</h3>
-          <p>Created in 2015 for Hadoop YARN and Spark 1.x/2.x. Requires a heavy local JVM daemon that forks heavyweight client drivers.</p>
+          <p>
+            A dependable pioneer for interactive Spark execution throughout the Spark 2.x and 3.x lifecycle. However, for modern Spark 4.x deployments, it encounters practical constraints:
+          </p>
           <ul class="shift-list">
             <li class="shift-item">
-              <span class="shift-icon">❌</span>
-              <div><strong>Heavy JVM Memory Footprint:</strong> Consumes 1–2 GB heap memory per gateway instance just to route requests.</div>
+              <span class="shift-icon">⚠️</span>
+              <div><strong>No Official Support Post-Spark 3.5:</strong> Upstream Apache Livy development has stalled, leaving no official releases or roadmap for Apache Spark 4.x.</div>
             </li>
             <li class="shift-item">
-              <span class="shift-icon">❌</span>
-              <div><strong>High Dispatch Latency:</strong> Spawns separate processes or driver wrappers, taking seconds or minutes to start sessions.</div>
+              <span class="shift-icon">⚠️</span>
+              <div><strong>Lacks Modern gRPC (Spark Connect):</strong> Designed around process-forked drivers and legacy <code>spark-submit</code> rather than the decoupled <code>sc://</code> gRPC protocol.</div>
             </li>
             <li class="shift-item">
-              <span class="shift-icon">❌</span>
-              <div><strong>No Spark Connect Support:</strong> Incompatible with Spark 4.x's decoupled gRPC client/server protocol.</div>
+              <span class="shift-icon">⚠️</span>
+              <div><strong>Gateway JVM Overhead:</strong> Requires a local Java/Scala runtime and heavyweight JVM dependencies (1–2 GB heap) directly on the gateway host.</div>
             </li>
             <li class="shift-item">
-              <span class="shift-icon">❌</span>
-              <div><strong>Complex Maintenance:</strong> Massive Scala codebase with legacy dependencies, difficult to containerize cleanly.</div>
+              <span class="shift-icon">⚠️</span>
+              <div><strong>Row-by-Row Serialization:</strong> Converts query outputs to text/JSON rows with noticeable serialization cost compared to binary columnar Arrow streams.</div>
             </li>
           </ul>
         </div>
 
         <div class="shift-card modern">
-          <span class="shift-tag">Modern Cloud-Native</span>
+          <span class="shift-tag">Spark 4.x &amp; Beyond</span>
           <h3>Livy-Next Gateway</h3>
-          <p>Statically compiled Go binary built from scratch for Spark 4.x Connect with gRPC and Apache Arrow streaming.</p>
+          <p>
+            A high-performance cloud-native gateway written in Go. Keeps all existing Livy REST client workflows while natively leveraging modern Spark Connect gRPC:
+          </p>
           <ul class="shift-list">
             <li class="shift-item">
               <span class="shift-icon">✅</span>
-              <div><strong>Zero Local JVM:</strong> 100% pure Go binary (&lt; 40MB) using only ~15–30 MB RSS memory. Instant container boot.</div>
+              <div><strong>Native Spark Connect (gRPC):</strong> Communicates directly with Spark 4.x drivers via <code>sc://</code> channels and Apache Arrow columnar memory transport.</div>
             </li>
             <li class="shift-item">
               <span class="shift-icon">✅</span>
-              <div><strong>Sub-Millisecond Routing:</strong> Translates REST JSON payloads directly into binary gRPC calls over persistent channels.</div>
+              <div><strong>100% Drop-In REST Preservation:</strong> Keeps existing Livy endpoints intact so notebooks, Airflow, and <a href="https://github.com/ErVijayRaghuwanshi/livy-ui" target="_blank" rel="noopener" style="color: var(--accent-cyan); text-decoration: underline;">Livy-UI</a> run seamlessly without changes.</div>
             </li>
             <li class="shift-item">
               <span class="shift-icon">✅</span>
-              <div><strong>Native Spark Connect:</strong> Communicates via `sc://` directly to Spark 4.x drivers with Apache Arrow columnar data.</div>
+              <div><strong>Zero Local JVM:</strong> Single statically compiled Go binary (&lt; 40MB) using only ~15–30 MB RSS memory. Instant container boot with zero JVM dependencies.</div>
             </li>
             <li class="shift-item">
               <span class="shift-icon">✅</span>
-              <div><strong>100% Drop-In Compatible:</strong> Works out of the box with Apache Airflow `LivyHook`, Jupyter `sparkmagic`, and custom pipelines.</div>
+              <div><strong>Sub-Millisecond Dispatch:</strong> Direct in-memory gRPC translation and persistent connection multiplexing eliminate driver startup latency.</div>
             </li>
           </ul>
         </div>
