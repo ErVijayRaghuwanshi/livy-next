@@ -1438,12 +1438,12 @@
         function formatUiUrl(url) {
             if (!url) return '';
             try {
+                if (url.startsWith('/')) {
+                    return window.location.origin + url;
+                }
                 const parsed = new URL(url, window.location.origin);
                 if (parsed.hostname === 'localhost' && window.location.hostname !== 'localhost') {
                     parsed.hostname = window.location.hostname;
-                }
-                if (parsed.port === '4040') {
-                    parsed.port = '4141';
                 }
                 return parsed.toString();
             } catch (e) {

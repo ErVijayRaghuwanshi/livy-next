@@ -3,12 +3,17 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"livy-next/pkg/session"
+	"livy-next/pkg/spark"
 )
 
 // ClientCreator defines the function signature for creating a session's Spark Connect client.
@@ -17,24 +22,74 @@ type ClientCreator func(params session.SessionCreateParams) (session.SparkClient
 type Handler struct {
 	manager            *session.Manager
 	createClient       ClientCreator
+	sparkRemote        string
 	sparkUIUrl         string
 	sparkHistoryUrl    string
+	discoveredSparkUI  string
+	sparkUIProxy       http.Handler
 	syncSessionTimeout bool
 }
 
 // NewHandler creates a new REST API Handler.
-func NewHandler(manager *session.Manager, createClient ClientCreator, sparkUIUrl string, sparkHistoryUrl string, syncSessionTimeout ...bool) *Handler {
+func NewHandler(manager *session.Manager, createClient ClientCreator, sparkRemote string, sparkUIUrl string, sparkHistoryUrl string, syncSessionTimeout ...bool) *Handler {
 	syncTimeout := true
 	if len(syncSessionTimeout) > 0 {
 		syncTimeout = syncSessionTimeout[0]
 	}
+	if sparkHistoryUrl == "" {
+		sparkHistoryUrl = "http://localhost:18088"
+	}
+
+	discoveredUI := spark.DiscoverSparkUIEndpoint(sparkRemote)
+	log.Printf("Dynamically discovered Spark Connect Web UI at %s (remote: %s)", discoveredUI, sparkRemote)
+
+	var proxy http.Handler
+	target, err := url.Parse(discoveredUI)
+	if err == nil {
+		p := httputil.NewSingleHostReverseProxy(target)
+		origDirector := p.Director
+		p.Director = func(req *http.Request) {
+			origDirector(req)
+			req.Header.Set("X-Forwarded-Context", "/spark-ui")
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/spark-ui")
+			if !strings.HasPrefix(req.URL.Path, "/") {
+				req.URL.Path = "/" + req.URL.Path
+			}
+			req.Host = target.Host
+		}
+		proxy = p
+	}
+
 	return &Handler{
 		manager:            manager,
 		createClient:       createClient,
+		sparkRemote:        sparkRemote,
 		sparkUIUrl:         sparkUIUrl,
 		sparkHistoryUrl:    sparkHistoryUrl,
+		discoveredSparkUI:  discoveredUI,
+		sparkUIProxy:       proxy,
 		syncSessionTimeout: syncTimeout,
 	}
+}
+
+// GetEffectiveSparkUIUrl returns the public-facing Spark UI URL.
+// If an explicit sparkUIUrl is configured (e.g. via --spark-ui-url), returns that.
+// Otherwise returns the built-in reverse proxy path "/spark-ui".
+func (h *Handler) GetEffectiveSparkUIUrl() string {
+	if h.sparkUIUrl != "" && h.sparkUIUrl != "auto" {
+		return h.sparkUIUrl
+	}
+	return "/spark-ui"
+}
+
+// SparkUIProxyHandler returns the HTTP handler for reverse proxying the Spark UI.
+func (h *Handler) SparkUIProxyHandler() http.Handler {
+	if h.sparkUIProxy != nil {
+		return h.sparkUIProxy
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Spark UI proxy not available", http.StatusBadGateway)
+	})
 }
 
 // CreateSessionRequest specifies the configuration and identity parameters for creating a new session.
@@ -207,7 +262,7 @@ func (h *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	appId, _ := client.GetAppID(ctx)
 
 	// Populate AppInfo with sparkAppId, live Spark UI link, Spark Connect UI link, and history link
-	sess.SetAppInfo(appId, h.sparkUIUrl, h.sparkHistoryUrl)
+	sess.SetAppInfo(appId, h.GetEffectiveSparkUIUrl(), h.sparkHistoryUrl)
 
 	// Inherit server-side session timeout from Spark Connect
 	if remoteTimeout, err := client.GetSessionTimeout(ctx); err == nil {

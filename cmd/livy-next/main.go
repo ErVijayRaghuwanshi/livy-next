@@ -81,11 +81,11 @@ func main() {
 	}
 	sparkRemote := flag.String("spark-remote", defaultSparkRemote, "Spark Connect remote endpoint")
 
-	defaultSparkUI := "http://localhost:4141"
+	defaultSparkUI := ""
 	if envUI := os.Getenv("SPARK_UI_URL"); envUI != "" {
 		defaultSparkUI = envUI
 	}
-	sparkUIUrl := flag.String("spark-ui-url", defaultSparkUI, "Base URL for the Spark Web UI")
+	sparkUIUrl := flag.String("spark-ui-url", defaultSparkUI, "Base URL for the Spark Web UI (leave empty to dynamically discover and proxy from connected Spark Connect server)")
 
 	defaultSparkHistory := "http://localhost:18088"
 	if envHist := os.Getenv("SPARK_HISTORY_URL"); envHist != "" {
@@ -238,7 +238,7 @@ func main() {
 		origins[i] = strings.TrimSpace(origins[i])
 	}
 
-	handler := api.NewHandler(manager, creator, *sparkUIUrl, *sparkHistoryUrl, *syncSessionTimeout)
+	handler := api.NewHandler(manager, creator, *sparkRemote, *sparkUIUrl, *sparkHistoryUrl, *syncSessionTimeout)
 	router := api.SetupRouter(handler, origins)
 
 	// 4. Start HTTP Server with Graceful Shutdown
