@@ -39,18 +39,9 @@ RUN mkdir -p /opt/spark/event_logs && \
 COPY --from=builder /build/bin/livy-next /usr/local/bin/livy-next
 RUN chmod +x /usr/local/bin/livy-next
 
-# Create the entrypoint script
-RUN echo '#!/bin/bash\n\
-echo "Starting Spark Connect Server on port 15002..."\n\
-/opt/spark/sbin/start-connect-server.sh --master "local[*]"\n\
-\n\
-echo "Waiting for Spark Connect to start..."\n\
-sleep 5\n\
-\n\
-echo "Starting livy-next REST API gateway on port 8998..."\n\
-exec /usr/local/bin/livy-next --addr :8998 --spark-remote sc://localhost:15002 --cors-allowed-origins "*"\n\
-' > /usr/local/bin/entrypoint.sh && \
-    chmod +x /usr/local/bin/entrypoint.sh
+# Copy and configure the container entrypoint script
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Switch back to the non-root spark user
 USER spark
