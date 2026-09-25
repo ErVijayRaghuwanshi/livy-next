@@ -537,13 +537,14 @@ npm run dev
         <div class="tab-content" id="tab-docker">
           <div class="code-block-wrapper">
             <button class="copy-btn">📋 Copy</button>
-            <pre class="code-pre"><code># Run Livy-Next connected to a remote Spark 4.x Connect cluster
+            <pre class="code-pre"><code># 1. Run Livy-Next standalone (All-in-one with embedded Spark 4.1.2 Connect Server)
 docker run -d \
   --name livy-next \
   -p 8998:8998 \
-  -e SPARK_REMOTE="sc://spark-master:15002" \
-  -e IDLE_TIMEOUT="30m" \
   ghcr.io/ervijayraghuwanshi/livy-next:v1.0.0
+
+# Or connect to an external Spark 4.x Connect cluster:
+# docker run -d --name livy-next -p 8998:8998 -e SPARK_REMOTE="sc://spark-master:15002" ghcr.io/ervijayraghuwanshi/livy-next:v1.0.0
 
 # Verify the service is online
 curl http://localhost:8998/version</code></pre>
