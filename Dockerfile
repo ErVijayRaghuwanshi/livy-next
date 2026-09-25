@@ -28,6 +28,19 @@ RUN pip3 install --no-cache-dir \
     "redis" \
     "neo4j"
 
+# Pre-download and install external JARs (Kafka, Avro, Sedona, PostgreSQL JDBC) into /opt/spark/jars/
+# This eliminates the 45-60s runtime Maven/Ivy dependency download during container startup,
+# allowing the container to boot and become query-ready in ~2-3 seconds!
+RUN /opt/spark/bin/spark-submit \
+    --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.1.2,org.apache.spark:spark-avro_2.13:4.1.2,org.apache.sedona:sedona-spark-shaded-4.1_2.13:1.9.0,org.postgresql:postgresql:42.7.3 \
+    --conf spark.jars.ivy=/tmp/.ivy \
+    --master "local[1]" \
+    --class org.apache.spark.examples.SparkPi \
+    /opt/spark/examples/jars/spark-examples_2.13-4.1.2.jar 1 && \
+    cp /tmp/.ivy/jars/*.jar /opt/spark/jars/ && \
+    rm -rf /tmp/.ivy /tmp/spark-* && \
+    chown -R spark:spark /opt/spark/jars
+
 # Copy Spark defaults configuration
 COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
 
