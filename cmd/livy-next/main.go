@@ -35,6 +35,7 @@ import (
 )
 
 func buildSparkRemoteURI(baseRemote string, userId string, sessionId string, userAgent string, token string, keepaliveTime time.Duration, keepaliveTimeout time.Duration) string {
+	baseRemote = spark.NormalizeRemote(baseRemote)
 	remote := strings.TrimRight(baseRemote, "/")
 	separator := "/;"
 	if strings.Contains(remote, ";") {
@@ -129,6 +130,8 @@ func main() {
 
 	mockMode := flag.Bool("mock", false, "Use in-memory mock Spark client for testing without a real Spark cluster")
 	flag.Parse()
+
+	*sparkRemote = spark.NormalizeRemote(*sparkRemote)
 
 	log.Printf("Starting livy-next on %s", *addr)
 	log.Printf("Spark Connect remote endpoint: %s", *sparkRemote)

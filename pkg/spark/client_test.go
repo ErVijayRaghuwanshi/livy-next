@@ -269,3 +269,27 @@ func TestParseSparkDuration(t *testing.T) {
 	}
 }
 
+func TestNormalizeRemote(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"", "sc://localhost:15002"},
+		{"   ", "sc://localhost:15002"},
+		{"http://localhost:15002", "sc://localhost:15002"},
+		{"https://localhost:15002", "sc://localhost:15002"},
+		{"localhost:15002", "sc://localhost:15002"},
+		{"sc://localhost:15002", "sc://localhost:15002"},
+		{"http://spark-master:15002/;session_id=123", "sc://spark-master:15002/;session_id=123"},
+		{"spark-master:15002", "sc://spark-master:15002"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			actual := NormalizeRemote(tc.input)
+			assert.Equal(t, tc.expected, actual)
+		})
+	}
+}
+
+

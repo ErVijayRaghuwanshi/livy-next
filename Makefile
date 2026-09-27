@@ -14,10 +14,12 @@ build: swagger
 
 build-linux: swagger
 	mkdir -p bin
-	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/livy-next cmd/livy-next/main.go
+	CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/livy-next-linux cmd/livy-next/main.go
 # 	Copy the binary to the docker build context
-	cp -r bin ../argus/
-	cp -r bin ../livy-ui/spark/
+	mkdir -p ../argus/bin ../livy-ui/spark/bin
+	cp bin/livy-next-linux ../argus/bin/livy-next
+	cp bin/livy-next-linux ../livy-ui/spark/bin/livy-next
+	rm -f bin/livy-next-linux
 
 test:
 	go test -v ./...

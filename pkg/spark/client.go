@@ -27,11 +27,31 @@ type Client struct {
 	maxRows int
 }
 
+// NormalizeRemote ensures the remote URI uses the sc:// scheme required by Spark Connect.
+// If given http://, https://, or a raw host:port, it automatically converts it to sc://host:port.
+func NormalizeRemote(remote string) string {
+	remote = strings.TrimSpace(remote)
+	if remote == "" {
+		return "sc://localhost:15002"
+	}
+	if strings.HasPrefix(remote, "http://") {
+		return "sc://" + strings.TrimPrefix(remote, "http://")
+	}
+	if strings.HasPrefix(remote, "https://") {
+		return "sc://" + strings.TrimPrefix(remote, "https://")
+	}
+	if !strings.HasPrefix(remote, "sc://") {
+		return "sc://" + remote
+	}
+	return remote
+}
+
 func NewClient(ctx context.Context, remote string, appName string, maxRows ...int) (*Client, error) {
 	limit := 10000
 	if len(maxRows) > 0 && maxRows[0] > 0 {
 		limit = maxRows[0]
 	}
+	remote = NormalizeRemote(remote)
 	sparkSession, err := sql.NewSessionBuilder().Remote(remote).Build(ctx)
 	if err != nil {
 		return nil, err
