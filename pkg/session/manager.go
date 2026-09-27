@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -49,6 +50,68 @@ func (m *Manager) CreateSession(params SessionCreateParams, client SparkClient) 
 	return sess
 }
 
+// AdoptDiscoveredSession registers an externally discovered Spark Connect session into the manager.
+// If the session is already tracked, it returns the existing session and false.
+func (m *Manager) AdoptDiscoveredSession(sessionID string, user string, clientCreator func() (SparkClient, error), appInfo map[string]string) (*Session, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Check if already registered by UUID
+	for _, sess := range m.sessions {
+		if sess.SessionID == sessionID {
+			if sess.State == SessionDead {
+				sess.State = SessionIdle
+				sess.Log = append(sess.Log, "Session marked active by Spark Connect discovery")
+			}
+			return sess, false
+		}
+	}
+
+	id := m.nextID
+	m.nextID++
+
+	name := "discovered-" + sessionID
+	if len(sessionID) > 8 {
+		name = "discovered-" + sessionID[:8]
+	}
+
+	params := SessionCreateParams{
+		Name:      name,
+		Kind:      "spark",
+		UserID:    user,
+		SessionID: sessionID,
+		UserAgent: "livy-next-discovered",
+	}
+
+	sess := NewSession(id, params, nil)
+	sess.State = SessionIdle
+	sess.SetClientCreator(clientCreator)
+	sess.Log = []string{"Discovered active session from Spark Connect"}
+	sess.SparkVersion = m.sparkVersion
+	if appInfo != nil {
+		for k, v := range appInfo {
+			sess.AppInfo[k] = v
+		}
+	}
+	m.sessions[id] = sess
+	return sess, true
+}
+
+// MarkSessionDeadIfClosed sets the session state to dead if it was terminated on Spark Connect.
+func (m *Manager) MarkSessionDeadIfClosed(sessionID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, sess := range m.sessions {
+		if sess.SessionID == sessionID && sess.State != SessionDead {
+			sess.State = SessionDead
+			sess.Log = append(sess.Log, "Session closed on Spark Connect server")
+			sess.LastActivity = time.Now()
+			return
+		}
+	}
+}
+
 // GetSession retrieves an active session by ID.
 func (m *Manager) GetSession(id int) (*Session, bool) {
 	m.mu.RLock()
@@ -89,6 +152,9 @@ func (m *Manager) ListSessions() []*Session {
 	for _, sess := range m.sessions {
 		list = append(list, sess)
 	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].ID < list[j].ID
+	})
 	return list
 }
 

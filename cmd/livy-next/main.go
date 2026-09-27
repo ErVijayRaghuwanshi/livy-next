@@ -128,6 +128,20 @@ func main() {
 	}
 	corsAllowedOrigins := flag.String("cors-allowed-origins", defaultCors, "Comma-separated list of allowed CORS origins")
 
+	defaultEnableDiscovery := false
+	if envDisc := os.Getenv("ENABLE_SESSION_DISCOVERY"); envDisc == "true" || envDisc == "1" {
+		defaultEnableDiscovery = true
+	}
+	enableSessionDiscovery := flag.Bool("enable-session-discovery", defaultEnableDiscovery, "Dynamically discover active Spark Connect sessions started externally")
+
+	defaultDiscoveryInterval := 15 * time.Second
+	if envInterval := os.Getenv("SESSION_DISCOVERY_INTERVAL"); envInterval != "" {
+		if d, err := time.ParseDuration(envInterval); err == nil {
+			defaultDiscoveryInterval = d
+		}
+	}
+	sessionDiscoveryInterval := flag.Duration("session-discovery-interval", defaultDiscoveryInterval, "Interval for periodic background discovery of external Spark Connect sessions")
+
 	mockMode := flag.Bool("mock", false, "Use in-memory mock Spark client for testing without a real Spark cluster")
 	flag.Parse()
 
@@ -242,6 +256,20 @@ func main() {
 	}
 
 	handler := api.NewHandler(manager, creator, *sparkRemote, *sparkUIUrl, *sparkHistoryUrl, *syncSessionTimeout)
+	handler.SetEnableDiscovery(*enableSessionDiscovery, *sessionDiscoveryInterval)
+	if *enableSessionDiscovery {
+		log.Printf("Dynamic Spark Connect session discovery enabled (interval: %v)", *sessionDiscoveryInterval)
+		go func() {
+			time.Sleep(2 * time.Second)
+			handler.SyncDiscoveredSessions(context.Background(), true)
+
+			ticker := time.NewTicker(*sessionDiscoveryInterval)
+			defer ticker.Stop()
+			for range ticker.C {
+				handler.SyncDiscoveredSessions(context.Background(), false)
+			}
+		}()
+	}
 	router := api.SetupRouter(handler, origins)
 
 	// 4. Start HTTP Server with Graceful Shutdown

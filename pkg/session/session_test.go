@@ -184,3 +184,44 @@ func TestSession_IdleTimeoutManagement(t *testing.T) {
 	mgr.SetIdleTimeout(2 * time.Hour)
 	assert.Equal(t, 2*time.Hour, mgr.GetIdleTimeout())
 }
+
+func TestManager_AdoptDiscoveredSession_And_LazyClient(t *testing.T) {
+	mgr := session.NewManager(30*time.Minute, 5*time.Minute)
+
+	clientCreated := false
+	creator := func() (session.SparkClient, error) {
+		clientCreated = true
+		return &dummySparkClient{}, nil
+	}
+
+	appInfo := map[string]string{
+		"sparkUiUrl": "/spark-ui",
+	}
+
+	sess, isNew := mgr.AdoptDiscoveredSession("test-uuid-999", "alice", creator, appInfo)
+	assert.True(t, isNew)
+	assert.Equal(t, 0, sess.ID)
+	assert.Equal(t, "test-uuid-999", sess.SessionID)
+	assert.Equal(t, "alice", sess.UserID)
+	assert.Equal(t, session.SessionIdle, sess.GetState())
+	assert.False(t, clientCreated, "Client should NOT be created until statement execution")
+
+	// Adopting again should return existing
+	sess2, isNew2 := mgr.AdoptDiscoveredSession("test-uuid-999", "alice", creator, appInfo)
+	assert.False(t, isNew2)
+	assert.Equal(t, sess.ID, sess2.ID)
+
+	// Execute statement on adopted session -> lazy client connects
+	stmt := sess.SubmitStatement("SELECT 1")
+	assert.Equal(t, 0, stmt.ID)
+
+	time.Sleep(50 * time.Millisecond)
+	assert.True(t, clientCreated, "Client should have been lazily instantiated on statement submission")
+	st, _ := sess.GetStatement(0, 0, 0)
+	assert.Equal(t, session.StatementAvailable, st.State)
+
+	// Mark dead
+	mgr.MarkSessionDeadIfClosed("test-uuid-999")
+	assert.Equal(t, session.SessionDead, sess.GetState())
+}
+

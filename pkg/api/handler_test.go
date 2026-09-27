@@ -398,3 +398,82 @@ func TestSparkUIProxy(t *testing.T) {
 	assert.Equal(t, "/spark-ui", receivedForwardedContext)
 	assert.Equal(t, "/connect/session/", receivedPath)
 }
+
+func TestListSessions_WithDynamicDiscovery(t *testing.T) {
+	connectHTML := `<!DOCTYPE html><html><body>
+<table id="sessionstat">
+  <tbody>
+    <tr>
+      <td> user_alice </td>
+      <td> <a href="/connect/session/?id=ext-session-1111"> ext-session-1111 </a> </td>
+      <td> 2026/09/27 18:26:13 </td>
+      <td>  </td>
+      <td> 5 minutes </td>
+      <td> 5 </td>
+    </tr>
+    <tr>
+      <td> na </td>
+      <td> <a href="/connect/session/?id=ext-session-2222"> ext-session-2222 </a> </td>
+      <td> 2026/09/27 18:29:27 </td>
+      <td>  </td>
+      <td> 2 minutes </td>
+      <td> 0 </td>
+    </tr>
+  </tbody>
+</table></body></html>`
+
+	mockSparkUI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/connect/" {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(connectHTML))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer mockSparkUI.Close()
+
+	mgr := session.NewManager(30*time.Minute, 5*time.Minute)
+	creator := func(params session.SessionCreateParams) (session.SparkClient, error) {
+		return &MockSparkClient{}, nil
+	}
+
+	h := api.NewHandler(mgr, creator, mockSparkUI.URL, "", "http://localhost:18088", false)
+	router := api.SetupRouter(h, []string{"*"})
+
+	// 1. By default, discovery is disabled: ListSessions returns 0 sessions
+	req, _ := http.NewRequest("GET", "/sessions", nil)
+	rr := httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var resp api.SessionsResponse
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, resp.Total)
+
+	// 2. Enable discovery
+	h.SetEnableDiscovery(true)
+
+	// 3. Request ListSessions with refresh=true -> discovers 2 external sessions
+	req, _ = http.NewRequest("GET", "/sessions?refresh=true", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	err = json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, resp.Total)
+	assert.Equal(t, "ext-session-1111", resp.Sessions[0].SessionID)
+	assert.Equal(t, "user_alice", resp.Sessions[0].UserID)
+	assert.Equal(t, "ext-session-2222", resp.Sessions[1].SessionID)
+
+	// 4. Test GetSession by UUID for discovered session
+	req, _ = http.NewRequest("GET", "/sessions/ext-session-1111", nil)
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	var singleSess session.Session
+	err = json.Unmarshal(rr.Body.Bytes(), &singleSess)
+	assert.NoError(t, err)
+	assert.Equal(t, "ext-session-1111", singleSess.SessionID)
+	assert.Equal(t, "user_alice", singleSess.UserID)
+}
+

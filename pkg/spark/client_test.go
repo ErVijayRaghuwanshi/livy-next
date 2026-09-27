@@ -292,4 +292,12 @@ func TestNormalizeRemote(t *testing.T) {
 	}
 }
 
+func TestExtractSessionIDFromRemote(t *testing.T) {
+	assert.Equal(t, "", ExtractSessionIDFromRemote("sc://localhost:15002"))
+	assert.Equal(t, "abc-123", ExtractSessionIDFromRemote("sc://localhost:15002/;session_id=abc-123"))
+	assert.Equal(t, "xyz-789", ExtractSessionIDFromRemote("sc://localhost:15002/;user_id=alice;session_id=xyz-789;user_agent=livy"))
+	assert.Equal(t, "", ExtractSessionIDFromRemote("sc://localhost:15002/;user_id=alice"))
+}
+
+
 

@@ -3,12 +3,14 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -28,6 +30,10 @@ type Handler struct {
 	discoveredSparkUI  string
 	sparkUIProxy       http.Handler
 	syncSessionTimeout bool
+	enableDiscovery    bool
+	discoveryInterval  time.Duration
+	lastDiscoveryTime  time.Time
+	discoveryMu        sync.Mutex
 }
 
 // NewHandler creates a new REST API Handler.
@@ -91,6 +97,81 @@ func (h *Handler) SparkUIProxyHandler() http.Handler {
 		http.Error(w, "Spark UI proxy not available", http.StatusBadGateway)
 	})
 }
+
+// SetEnableDiscovery configures whether dynamic Spark Connect session discovery is enabled.
+func (h *Handler) SetEnableDiscovery(enable bool, interval ...time.Duration) {
+	h.enableDiscovery = enable
+	if len(interval) > 0 && interval[0] > 0 {
+		h.discoveryInterval = interval[0]
+	}
+}
+
+// SyncDiscoveredSessions polls Spark Connect Web UI and synchronizes active sessions into manager.
+func (h *Handler) SyncDiscoveredSessions(ctx context.Context, force bool) {
+	if !h.enableDiscovery {
+		return
+	}
+
+	h.discoveryMu.Lock()
+	defer h.discoveryMu.Unlock()
+
+	debounce := 3 * time.Second
+	if h.discoveryInterval > 0 && h.discoveryInterval < debounce {
+		debounce = h.discoveryInterval
+	}
+	if !force && time.Since(h.lastDiscoveryTime) < debounce {
+		return
+	}
+	h.lastDiscoveryTime = time.Now()
+
+	uiEndpoint := h.discoveredSparkUI
+	if uiEndpoint == "" {
+		uiEndpoint = spark.DiscoverSparkUIEndpoint(h.sparkRemote)
+		h.discoveredSparkUI = uiEndpoint
+	}
+
+	active, err := spark.DiscoverActiveSessions(ctx, uiEndpoint)
+	if err != nil {
+		log.Printf("Session discovery from %s failed: %v", uiEndpoint, err)
+		return
+	}
+
+	effectiveUI := h.GetEffectiveSparkUIUrl()
+	appId := ""
+	for _, sess := range h.manager.ListSessions() {
+		if sess.AppInfo["sparkAppId"] != "" {
+			appId = sess.AppInfo["sparkAppId"]
+			break
+		}
+	}
+
+	for _, d := range active {
+		sessionID := d.SessionID
+		user := d.User
+		creator := func() (session.SparkClient, error) {
+			return h.createClient(session.SessionCreateParams{
+				SessionID: sessionID,
+				UserID:    user,
+				Kind:      "spark",
+			})
+		}
+		appInfo := map[string]string{
+			"sparkUiUrl": effectiveUI,
+		}
+		if appId != "" {
+			appInfo["sparkAppId"] = appId
+			appInfo["sparkHistoryUrl"] = fmt.Sprintf("%s/history/%s", strings.TrimRight(h.sparkHistoryUrl, "/"), appId)
+		}
+		if effectiveUI != "" {
+			appInfo["sparkConnectUiUrl"] = fmt.Sprintf("%s/connect/session/?id=%s", strings.TrimRight(effectiveUI, "/"), sessionID)
+		}
+
+		if sess, isNew := h.manager.AdoptDiscoveredSession(sessionID, user, creator, appInfo); isNew {
+			log.Printf("Discovered external Spark Connect session %s (User: %q, ID: %d)", sessionID, user, sess.ID)
+		}
+	}
+}
+
 
 // CreateSessionRequest specifies the configuration and identity parameters for creating a new session.
 type CreateSessionRequest struct {
@@ -191,6 +272,10 @@ type CancelStatementResponse struct {
 // @Success 200 {object} SessionsResponse
 // @Router /sessions [get]
 func (h *Handler) ListSessions(w http.ResponseWriter, r *http.Request) {
+	if h.enableDiscovery {
+		forceRefresh := r.URL.Query().Get("refresh") == "true"
+		h.SyncDiscoveredSessions(r.Context(), forceRefresh)
+	}
 	sessions := h.manager.ListSessions()
 	resp := SessionsResponse{
 		From:         0,
@@ -331,7 +416,12 @@ func (h *Handler) GetVersion(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} ErrorResponse "Session not found"
 // @Router /sessions/{id} [get]
 func (h *Handler) GetSession(w http.ResponseWriter, r *http.Request) {
-	sess, exists := h.manager.GetSessionByIdentifier(chi.URLParam(r, "id"))
+	idStr := chi.URLParam(r, "id")
+	sess, exists := h.manager.GetSessionByIdentifier(idStr)
+	if !exists && h.enableDiscovery {
+		h.SyncDiscoveredSessions(r.Context(), true)
+		sess, exists = h.manager.GetSessionByIdentifier(idStr)
+	}
 	if !exists {
 		respondError(w, http.StatusNotFound, "Session not found")
 		return

@@ -23,8 +23,66 @@ import (
 )
 
 type Client struct {
-	session sql.SparkSession
-	maxRows int
+	session   sql.SparkSession
+	sessionId string
+	maxRows   int
+}
+
+// ExtractSessionIDFromRemote parses the session_id property from a Spark Connect URI.
+func ExtractSessionIDFromRemote(remote string) string {
+	parts := strings.Split(remote, ";")
+	for _, p := range parts {
+		kv := strings.SplitN(p, "=", 2)
+		if len(kv) == 2 && strings.TrimSpace(kv[0]) == "session_id" {
+			return strings.TrimSpace(kv[1])
+		}
+	}
+	return ""
+}
+
+// applySessionIDToSparkSession ensures that sparkSessionImpl and its underlying
+// gRPC executor client use the expected session ID when communicating with Spark Connect.
+func applySessionIDToSparkSession(s sql.SparkSession, targetID string) {
+	if s == nil || targetID == "" {
+		return
+	}
+	defer func() {
+		_ = recover()
+	}()
+
+	val := reflect.ValueOf(s).Elem()
+	if sf := val.FieldByName("sessionId"); sf.IsValid() {
+		reflect.NewAt(sf.Type(), unsafe.Pointer(sf.UnsafeAddr())).Elem().SetString(targetID)
+	}
+
+	clientField := val.FieldByName("client")
+	if !clientField.IsValid() {
+		return
+	}
+
+	clientVal := reflect.NewAt(clientField.Type(), unsafe.Pointer(clientField.UnsafeAddr())).Elem()
+	targetVal := clientVal.Elem()
+	if targetVal.Kind() == reflect.Ptr {
+		targetVal = targetVal.Elem()
+	}
+	if targetVal.Kind() == reflect.Struct {
+		if sf := targetVal.FieldByName("sessionId"); sf.IsValid() {
+			reflect.NewAt(sf.Type(), unsafe.Pointer(sf.UnsafeAddr())).Elem().SetString(targetID)
+		}
+
+		innerClientField := targetVal.FieldByName("client")
+		if innerClientField.IsValid() {
+			innerVal := innerClientField.Elem()
+			if innerVal.Kind() == reflect.Ptr {
+				innerVal = innerVal.Elem()
+			}
+			if innerVal.Kind() == reflect.Struct {
+				if isf := innerVal.FieldByName("sessionId"); isf.IsValid() {
+					reflect.NewAt(isf.Type(), unsafe.Pointer(isf.UnsafeAddr())).Elem().SetString(targetID)
+				}
+			}
+		}
+	}
 }
 
 // NormalizeRemote ensures the remote URI uses the sc:// scheme required by Spark Connect.
@@ -56,7 +114,11 @@ func NewClient(ctx context.Context, remote string, appName string, maxRows ...in
 	if err != nil {
 		return nil, err
 	}
-	c := &Client{session: sparkSession, maxRows: limit}
+	targetSessionID := ExtractSessionIDFromRemote(remote)
+	if targetSessionID != "" {
+		applySessionIDToSparkSession(sparkSession, targetSessionID)
+	}
+	c := &Client{session: sparkSession, sessionId: targetSessionID, maxRows: limit}
 	if appName != "" {
 		_ = c.SetConfig(ctx, "spark.app.name", appName)
 	}
@@ -256,21 +318,17 @@ func DiscoverSparkUIEndpoint(remote string) string {
 }
 
 func (c *Client) GetSessionID() string {
+	if c.sessionId != "" {
+		return c.sessionId
+	}
 	defer func() {
 		_ = recover()
 	}()
 	valSession := reflect.ValueOf(c.session).Elem()
-	clientField := valSession.FieldByName("client")
-	if !clientField.IsValid() {
-		return ""
+	if field := valSession.FieldByName("sessionId"); field.IsValid() {
+		return field.String()
 	}
-	clientVal := reflect.NewAt(clientField.Type(), unsafe.Pointer(clientField.UnsafeAddr())).Elem()
-	valClientImpl := reflect.ValueOf(clientVal.Interface()).Elem()
-	sessionIdField := valClientImpl.FieldByName("sessionId")
-	if !sessionIdField.IsValid() {
-		return ""
-	}
-	return sessionIdField.String()
+	return ""
 }
 
 func (c *Client) SetConfig(ctx context.Context, key string, value string) error {

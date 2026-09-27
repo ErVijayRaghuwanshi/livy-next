@@ -160,8 +160,16 @@ type Session struct {
 
 	idleTimeoutDuration time.Duration
 	client              SparkClient
+	clientCreator       func() (SparkClient, error)
 	mu                  sync.RWMutex
 	closeCh             chan struct{}
+}
+
+// SetClientCreator configures a factory function to lazily instantiate a SparkClient on demand.
+func (s *Session) SetClientCreator(fn func() (SparkClient, error)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.clientCreator = fn
 }
 
 // NewSession creates and initializes a new Session.
@@ -317,7 +325,48 @@ func (s *Session) runStatement(stmt *Statement) {
 		}
 	}()
 
-	res, err := s.client.ExecuteSQL(ctx, stmt.Code)
+	s.mu.Lock()
+	if s.client == nil && s.clientCreator != nil {
+		client, err := s.clientCreator()
+		if err != nil {
+			stmt.Completed = time.Now().UnixNano() / int64(time.Millisecond)
+			stmt.Progress = 1.0
+			stmt.State = StatementError
+			stmt.Output = &StatementOutput{
+				Status:         "error",
+				ExecutionCount: stmt.ID,
+				Ename:          "SessionAttachError",
+				Evalue:         "Failed to attach client to Spark Connect session: " + err.Error(),
+				Traceback:      []string{err.Error()},
+			}
+			s.Log = append(s.Log, "Failed to attach client: "+err.Error())
+			s.updateBusyStateLocked()
+			s.mu.Unlock()
+			return
+		}
+		s.client = client
+	}
+	client := s.client
+	s.mu.Unlock()
+
+	if client == nil {
+		s.mu.Lock()
+		stmt.Completed = time.Now().UnixNano() / int64(time.Millisecond)
+		stmt.Progress = 1.0
+		stmt.State = StatementError
+		stmt.Output = &StatementOutput{
+			Status:         "error",
+			ExecutionCount: stmt.ID,
+			Ename:          "NoClientError",
+			Evalue:         "No Spark client available for this session",
+			Traceback:      []string{"No Spark client available for this session"},
+		}
+		s.updateBusyStateLocked()
+		s.mu.Unlock()
+		return
+	}
+
+	res, err := client.ExecuteSQL(ctx, stmt.Code)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()

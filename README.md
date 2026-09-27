@@ -107,6 +107,8 @@ docker run -d \
 | `--grpc-keepalive-time` | `60s` | gRPC keepalive ping frequency for Spark Connect channels. |
 | `--grpc-keepalive-timeout` | `20s` | gRPC keepalive ping timeout duration. |
 | `--cors-allowed-origins` | `*` | Comma-separated list of allowed CORS origins. |
+| `--enable-session-discovery` | `false` | Dynamically discover and adopt active Spark Connect sessions started externally. |
+| `--session-discovery-interval` | `15s` | Polling frequency for background discovery of external Spark Connect sessions. |
 | `--mock` | `false` | Enable in-memory mock Spark client for offline CI/CD verification. |
 
 ---
